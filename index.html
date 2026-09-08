@@ -314,7 +314,7 @@
 
 <script>
 /* =======================================================
-   KONFIGURASI SUPABASE — GANTI DENGAN PUNYA KAMU
+   KONFIGURASI SUPABASE
    ======================================================= */
 const SUPABASE_URL = "https://ogmiecjmxnfcgjxjkrkt.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_VEtowyIjRdeeQzmrJ4B2DQ_D8zzVhPF";
@@ -351,6 +351,7 @@ const ICONS = {
   plus: svgIcon('<path d="M12 5v14"/><path d="M5 12h14"/>', 24),
   close: svgIcon('<path d="M6 6l12 12"/><path d="M18 6 6 18"/>', 16)
 };
+
 function paintIcons(root){
   (root || document).querySelectorAll('[data-icon]').forEach(el=>{
     const name = el.getAttribute('data-icon');
@@ -440,6 +441,7 @@ function renderAll(){
   renderHistory();
   renderRightPanel();
   fillPocketSelects();
+  paintIcons();
 }
 
 function renderTotals(){
@@ -639,165 +641,211 @@ function setTxType(type){
 }
 
 /* Undo the balance effect of an existing transaction (used before edit/delete) */
-async function reverseTransactionEffect(t){
-  if(t.type === 'TRANSFER'){
-    const from = pockets.find(p=>p.id===t.pocket_id);
-    const to = pockets.find(p=>p.id===t.related_pocket_id);
-    if(from){ from.balance = Number(from.balance) + Number(t.amount); await sb.from('pockets').update({ balance: from.balance }).eq('id', from.id); }
-    if(to){ to.balance = Number(to.balance) - Number(t.amount); await sb.from('pockets').update({ balance: to.balance }).eq('id', to.id); }
-  } else {
-    const p = pockets.find(x=>x.id===t.pocket_id);
-    if(p){
-      p.balance = t.type === 'PEMASUKAN' ? Number(p.balance) - Number(t.amount) : Number(p.balance) + Number(t.amount);
-      await sb.from('pockets').update({ balance: p.balance }).eq('id', p.id);
+async function reverseTransactionEffect(t) {
+  const { data: currentPockets } = await sb.from('pockets').select('*');
+  const list = currentPockets || pockets;
+
+  if (t.type === 'PEMASUKAN') {
+    const p = list.find(x => x.id === t.pocket_id);
+    if (p) {
+      await sb.from('pockets').update({ balance: Number(p.balance) - Number(t.amount) }).eq('id', t.pocket_id);
+    }
+  } else if (t.type === 'PENGELUARAN') {
+    const p = list.find(x => x.id === t.pocket_id);
+    if (p) {
+      await sb.from('pockets').update({ balance: Number(p.balance) + Number(t.amount) }).eq('id', t.pocket_id);
+    }
+  } else if (t.type === 'TRANSFER') {
+    const pFrom = list.find(x => x.id === t.pocket_id);
+    const pTo = list.find(x => x.id === t.related_pocket_id);
+    if (pFrom) {
+      await sb.from('pockets').update({ balance: Number(pFrom.balance) + Number(t.amount) }).eq('id', t.pocket_id);
+    }
+    if (pTo) {
+      await sb.from('pockets').update({ balance: Number(pTo.balance) - Number(t.amount) }).eq('id', t.related_pocket_id);
     }
   }
 }
 
-/* Apply the balance effect of a (new or edited) transaction */
-async function applyTransactionEffect(type, pocketId, relatedPocketId, amount){
-  if(type === 'TRANSFER'){
-    const from = pockets.find(p=>p.id===pocketId);
-    const to = pockets.find(p=>p.id===relatedPocketId);
-    from.balance = Number(from.balance) - amount;
-    to.balance = Number(to.balance) + amount;
-    await sb.from('pockets').update({ balance: from.balance }).eq('id', from.id);
-    await sb.from('pockets').update({ balance: to.balance }).eq('id', to.id);
-  } else {
-    const p = pockets.find(x=>x.id===pocketId);
-    p.balance = type === 'PEMASUKAN' ? Number(p.balance) + amount : Number(p.balance) - amount;
-    await sb.from('pockets').update({ balance: p.balance }).eq('id', p.id);
+/* Apply transaction effect to pocket balance */
+async function applyTransactionEffect(type, amount, pocketId, relatedPocketId) {
+  const { data: currentPockets } = await sb.from('pockets').select('*');
+  const list = currentPockets || pockets;
+
+  if (type === 'PEMASUKAN') {
+    const p = list.find(x => x.id === pocketId);
+    if (p) {
+      await sb.from('pockets').update({ balance: Number(p.balance) + amount }).eq('id', pocketId);
+    }
+  } else if (type === 'PENGELUARAN') {
+    const p = list.find(x => x.id === pocketId);
+    if (p) {
+      await sb.from('pockets').update({ balance: Number(p.balance) - amount }).eq('id', pocketId);
+    }
+  } else if (type === 'TRANSFER') {
+    const pFrom = list.find(x => x.id === pocketId);
+    const pTo = list.find(x => x.id === relatedPocketId);
+    if (pFrom) {
+      await sb.from('pockets').update({ balance: Number(pFrom.balance) - amount }).eq('id', pocketId);
+    }
+    if (pTo) {
+      await sb.from('pockets').update({ balance: Number(pTo.balance) + amount }).eq('id', relatedPocketId);
+    }
   }
 }
 
-async function submitTransaction(){
-  const amount = Number(document.getElementById('txAmount').value || 0);
+async function submitTransaction() {
+  const amount = Number(document.getElementById('txAmount').value);
   const category = document.getElementById('txCategory').value.trim();
   const note = document.getElementById('txNote').value.trim();
   const errEl = document.getElementById('txError');
   errEl.textContent = '';
 
-  if(amount <= 0){ errEl.textContent = "Jumlah harus lebih dari 0."; return; }
-  if(pockets.length === 0){ errEl.textContent = "Buat kantong dulu sebelum mencatat mutasi."; return; }
+  if (!amount || amount <= 0) {
+    errEl.textContent = 'Masukkan jumlah nominal yang valid.';
+    return;
+  }
 
-  let pocketId, relatedPocketId = null;
-  if(txType === 'TRANSFER'){
+  let pocketId = null;
+  let relatedPocketId = null;
+
+  if (txType === 'TRANSFER') {
     pocketId = document.getElementById('txFromPocket').value;
     relatedPocketId = document.getElementById('txToPocket').value;
-    if(pocketId === relatedPocketId){ errEl.textContent = "Kantong asal dan tujuan tidak boleh sama."; return; }
+    if (!pocketId || !relatedPocketId) {
+      errEl.textContent = 'Pilih kantong asal dan tujuan.';
+      return;
+    }
+    if (pocketId === relatedPocketId) {
+      errEl.textContent = 'Kantong asal dan tujuan tidak boleh sama.';
+      return;
+    }
   } else {
     pocketId = document.getElementById('txPocket').value;
-  }
-
-  const oldTx = editingTxId ? transactions.find(x=>x.id===editingTxId) : null;
-
-  // Kalau sedang edit, batalkan dulu efek saldo dari mutasi lama
-  if(oldTx) await reverseTransactionEffect(oldTx);
-
-  // Validasi saldo cukup untuk efek yang baru
-  if(txType === 'TRANSFER'){
-    const fromPocket = pockets.find(p=>p.id===pocketId);
-    if(Number(fromPocket.balance) < amount){
-      errEl.textContent = "Saldo kantong asal tidak cukup.";
-      if(oldTx) await applyTransactionEffect(oldTx.type, oldTx.pocket_id, oldTx.related_pocket_id, Number(oldTx.amount));
-      return;
-    }
-  } else if(txType === 'PENGELUARAN'){
-    const p = pockets.find(x=>x.id===pocketId);
-    if(Number(p.balance) < amount){
-      errEl.textContent = "Saldo kantong tidak cukup.";
-      if(oldTx) await applyTransactionEffect(oldTx.type, oldTx.pocket_id, oldTx.related_pocket_id, Number(oldTx.amount));
+    if (!pocketId) {
+      errEl.textContent = 'Pilih kantong terlebih dahulu.';
       return;
     }
   }
 
-  await applyTransactionEffect(txType, pocketId, relatedPocketId, amount);
+  if (editingTxId) {
+    const oldTx = transactions.find(t => t.id === editingTxId);
+    if (oldTx) {
+      await reverseTransactionEffect(oldTx);
+    }
 
-  if(editingTxId){
-    await sb.from('transactions').update({
-      pocket_id: pocketId, related_pocket_id: relatedPocketId,
-      type: txType, amount, category, note
+    const { error } = await sb.from('transactions').update({
+      type: txType,
+      amount: amount,
+      pocket_id: pocketId,
+      related_pocket_id: relatedPocketId,
+      category: category,
+      note: note
     }).eq('id', editingTxId);
+
+    if (error) {
+      errEl.textContent = error.message;
+      return;
+    }
   } else {
-    await sb.from('transactions').insert({
-      user_id: currentUser.id, pocket_id: pocketId, related_pocket_id: relatedPocketId,
-      type: txType, amount, category, note
+    const { error } = await sb.from('transactions').insert({
+      user_id: currentUser.id,
+      type: txType,
+      amount: amount,
+      pocket_id: pocketId,
+      related_pocket_id: relatedPocketId,
+      category: category,
+      note: note
     });
+
+    if (error) {
+      errEl.textContent = error.message;
+      return;
+    }
   }
+
+  await applyTransactionEffect(txType, amount, pocketId, relatedPocketId);
 
   editingTxId = null;
   closeModal('txModal');
   await loadData();
 }
 
-async function deleteTransaction(id){
-  if(!confirm('Hapus mutasi ini? Saldo kantong akan disesuaikan kembali.')) return;
-  const t = transactions.find(x=>x.id===id);
-  if(t) await reverseTransactionEffect(t);
-  await sb.from('transactions').delete().eq('id', id);
-  await loadData();
+async function deleteTransaction(id) {
+  if (!confirm('Apakah kamu yakin ingin menghapus mutasi ini?')) return;
+  const t = transactions.find(x => x.id === id);
+  if (t) {
+    await reverseTransactionEffect(t);
+    await sb.from('transactions').delete().eq('id', id);
+    await loadData();
+  }
 }
 
-/* ---------------- EXPORT ---------------- */
-function exportRows(){
-  return transactions.map(t=>{
-    const pocket = pockets.find(p=>p.id===t.pocket_id);
-    return {
-      Tanggal: new Date(t.created_at).toLocaleDateString('id-ID'),
-      Tipe: t.type,
-      Kategori: t.category || '',
-      Catatan: t.note || '',
-      Jumlah: Number(t.amount),
-      Kantong: pocket ? pocket.name : ''
-    };
+/* ---------------- EXPORT DATA ---------------- */
+function exportCSV() {
+  if (!transactions.length) return alert('Tidak ada data transaksi.');
+  let csv = 'Tanggal,Tipe,Kategori,Catatan,Jumlah\n';
+  transactions.forEach(t => {
+    const date = new Date(t.created_at).toISOString().split('T')[0];
+    csv += `"${date}","${t.type}","${t.category || ''}","${t.note || ''}",${t.amount}\n`;
   });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `mutasi_keuangan_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
 }
 
-function exportCSV(){
-  let csv = "Tanggal,Tipe,Kategori,Catatan,Jumlah,Kantong\n";
-  exportRows().forEach(r=>{
-    csv += `${r.Tanggal},${r.Tipe},${r.Kategori},${r.Catatan},${r.Jumlah},${r.Kantong}\n`;
-  });
-  const blob = new Blob([csv], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'riwayat-mutasi.csv'; a.click();
-  URL.revokeObjectURL(url);
-}
-
-function exportExcel(){
-  const rows = exportRows();
-  const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [{wch:12},{wch:14},{wch:16},{wch:24},{wch:14},{wch:16}];
+function exportExcel() {
+  if (!transactions.length) return alert('Tidak ada data transaksi.');
+  const data = transactions.map(t => ({
+    Tanggal: new Date(t.created_at).toLocaleDateString('id-ID'),
+    Tipe: t.type,
+    Kategori: t.category || '-',
+    Catatan: t.note || '-',
+    Jumlah: t.amount
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Mutasi');
-  XLSX.writeFile(wb, 'riwayat-mutasi.xlsx');
+  XLSX.utils.book_append_sheet(wb, ws, "Mutasi");
+  XLSX.writeFile(wb, `mutasi_keuangan_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
-function exportPDF(){
+function exportPDF() {
+  if (!transactions.length) return alert('Tidak ada data transaksi.');
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  doc.setFontSize(14);
-  doc.text('Riwayat Mutasi - Keuangan Ranting', 14, 16);
-  const rows = exportRows().map(r => [r.Tanggal, r.Tipe, r.Kategori || '-', r.Catatan || '-', rupiah(r.Jumlah), r.Kantong || '-']);
+  doc.text("Laporan Mutasi Keuangan Ranting", 14, 15);
+  
+  const tableData = transactions.map(t => [
+    new Date(t.created_at).toLocaleDateString('id-ID'),
+    t.type,
+    t.category || '-',
+    t.note || '-',
+    rupiah(t.amount)
+  ]);
+
   doc.autoTable({
-    startY: 22,
-    head: [['Tanggal','Tipe','Kategori','Catatan','Jumlah','Kantong']],
-    body: rows,
-    styles:{ fontSize:8 },
-    headStyles:{ fillColor:[29,155,240] }
+    head: [['Tanggal', 'Tipe', 'Kategori', 'Catatan', 'Jumlah']],
+    body: tableData,
+    startY: 20
   });
-  doc.save('riwayat-mutasi.pdf');
+
+  doc.save(`mutasi_keuangan_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
-/* ---------------- INIT ---------------- */
-(async function init(){
+/* ---------------- INITIALIZATION ---------------- */
+sb.auth.getSession().then(({ data: { session } }) => {
+  if (session) onLoggedIn(session.user);
+});
+
+sb.auth.onAuthStateChange((_, session) => {
+  if (session && !currentUser) onLoggedIn(session.user);
+});
+
+window.addEventListener('DOMContentLoaded', () => {
   paintIcons();
-  const { data: { session } } = await sb.auth.getSession();
-  if(session && session.user){
-    await onLoggedIn(session.user);
-  }
-})();
+});
 </script>
 </body>
 </html>
