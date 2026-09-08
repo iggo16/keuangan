@@ -326,9 +326,10 @@ let txFilter = "ALL";
 const rupiah = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
 
 /* ---------------- SIMPLE MINIMALIST LINE ICONS ---------------- */
-function svgIcon(path, size){
+function svgIcon(path, size, strokeWidth){
   size = size || 20;
-  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+  strokeWidth = strokeWidth || 2;
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
 }
 const ICONS = {
   home: svgIcon('<path d="M4 10.5 12 4l8 6.5"/><path d="M6 9.5V19a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1V9.5"/>'),
@@ -338,7 +339,7 @@ const ICONS = {
   arrowDown: svgIcon('<path d="M12 5v14"/><path d="m6 13 6 6 6-6"/>', 16),
   arrowUp: svgIcon('<path d="M12 19V5"/><path d="m6 11 6-6 6 6"/>', 16),
   swap: svgIcon('<path d="m17 3 4 4-4 4"/><path d="M21 7H9"/><path d="m7 21-4-4 4-4"/><path d="M3 17h12"/>', 16),
-  trash: svgIcon('<path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/>', 16),
+  trash: svgIcon('<path d="M5 7h14"/><path d="M10 11v5"/><path d="M14 11v5"/><path d="M6.5 7l.8 12a1.5 1.5 0 0 0 1.5 1.4h6.4a1.5 1.5 0 0 0 1.5-1.4l.8-12"/><path d="M9.5 7V4.8A.8.8 0 0 1 10.3 4h3.4a.8.8 0 0 1 .8.8V7"/>', 15, 1.6),
   plus: svgIcon('<path d="M12 5v14"/><path d="M5 12h14"/>', 24),
   close: svgIcon('<path d="M6 6l12 12"/><path d="M18 6 6 18"/>', 16)
 };
