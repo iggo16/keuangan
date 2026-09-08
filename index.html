@@ -3,78 +3,116 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>TabunganTZ Clone</title>
+<title>Keuangan Ranting</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf-autotable.min.js"></script>
 <style>
   :root{
-    --bg:#0d1117; --card:#161d2b; --card2:#1c2537; --orange:#f5860a;
-    --orange-soft:#ffb15c; --green:#1fd28f; --red:#f5860a; --text:#eef1f7;
-    --muted:#8b93a7; --danger:#e05a3b;
+    --bg:#000000; --card:#16181c; --card2:#1c1f23; --border:#2f3336;
+    --accent:#1d9bf0; --accent-hover:#1a8cd8; --green:#00ba7c; --red:#f4212e;
+    --text:#e7e9ea; --muted:#71767b; --danger:#f4212e;
   }
   *{box-sizing:border-box;}
   body{
-    margin:0; font-family:'Segoe UI',Roboto,Arial,sans-serif;
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
     background:var(--bg); color:var(--text); min-height:100vh;
     padding-bottom:90px;
   }
   .container{max-width:520px; margin:0 auto; padding:20px 16px;}
-  h1{font-size:1.8rem; margin:4px 0 18px;}
-  .label{color:var(--muted); font-size:0.75rem; letter-spacing:1px; text-transform:uppercase;}
-  .card{background:var(--card); border-radius:18px; padding:20px; margin-bottom:16px;}
+  h1{font-size:1.7rem; margin:2px 0 18px; font-weight:800;}
+  .brand-label{color:var(--muted); font-size:0.85rem; margin:0 0 2px; font-weight:500;}
+  .label{color:var(--muted); font-size:0.82rem; font-weight:500;}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:16px;}
   .balance-card{background:var(--card);}
-  .balance-amount{font-size:2.1rem; font-weight:700; margin:8px 0 18px;}
+  .balance-amount{font-size:2.1rem; font-weight:800; margin:8px 0 18px; letter-spacing:-0.01em;}
   .row{display:flex; gap:12px;}
-  .mini-card{flex:1; background:var(--card2); border-radius:14px; padding:14px; display:flex; align-items:center; gap:10px;}
+  .mini-card{flex:1; background:var(--card2); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; gap:10px;}
   .mini-card .icon{width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;}
-  .icon.in{background:#123c30; color:var(--green);}
-  .icon.out{background:#3c2412; color:var(--orange-soft);}
+  .icon.in{background:#04261d; color:var(--green);}
+  .icon.out{background:#2d0e12; color:var(--red);}
   .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:6px;}
-  .pocket{background:var(--card); border-radius:16px; padding:16px; position:relative;}
-  .badge{display:inline-block; background:var(--orange); color:#1a1206; font-weight:700; font-size:0.7rem; padding:4px 12px; border-radius:20px;}
-  .pocket-name{font-size:1.15rem; font-weight:700; margin:10px 0 2px;}
+  .pocket{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; position:relative;}
+  .badge{display:inline-block; background:transparent; border:1px solid var(--accent); color:var(--accent); font-weight:700; font-size:0.7rem; padding:4px 12px; border-radius:9999px;}
+  .pocket-name{font-size:1.1rem; font-weight:700; margin:10px 0 2px;}
   .pocket-code{color:var(--muted); font-size:0.8rem;}
   .pocket-balance{margin-top:14px; font-size:1.1rem; font-weight:700;}
   .pocket .sisa{color:var(--muted); font-size:0.75rem;}
   .section-head{display:flex; justify-content:space-between; align-items:center; margin:22px 0 10px;}
-  .section-head a{color:var(--orange); font-size:0.85rem; text-decoration:none; cursor:pointer;}
-  .tx{background:var(--card); border-radius:14px; padding:14px; display:flex; align-items:center; gap:12px; margin-bottom:10px;}
+  .section-head a{color:var(--accent); font-size:0.85rem; text-decoration:none; cursor:pointer; font-weight:600;}
+  .tx{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; gap:12px; margin-bottom:10px;}
   .tx .icon{width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;}
   .tx-info{flex:1;}
   .tx-title{font-weight:600;}
   .tx-sub{color:var(--muted); font-size:0.78rem;}
   .tx-amount.pos{color:var(--green); font-weight:700;}
-  .tx-amount.neg{color:var(--orange-soft); font-weight:700;}
-  nav{position:fixed; bottom:14px; left:50%; transform:translateX(-50%); width:94%; max-width:520px;
-      background:var(--card); border-radius:24px; display:flex; justify-content:space-around; padding:10px 4px; box-shadow:0 10px 30px rgba(0,0,0,.4);}
-  nav .item{display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--muted); font-size:0.68rem; cursor:pointer; padding:6px 10px; border-radius:14px;}
-  nav .item.active{color:var(--orange); background:rgba(245,134,10,.12);}
-  nav .fab{background:var(--orange); width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:#1a1206; margin-top:-22px; box-shadow:0 6px 18px rgba(245,134,10,.5); cursor:pointer;}
+  .tx-amount.neg{color:var(--red); font-weight:700;}
+  nav#bottomNav{position:fixed; bottom:0; left:0; right:0; background:var(--bg); border-top:1px solid var(--border);
+      display:flex; justify-content:space-around; padding:10px 0 16px; z-index:20;}
+  nav#bottomNav .item{display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--muted); font-size:0.68rem; cursor:pointer; padding:6px 14px;}
+  nav#bottomNav .item.active{color:var(--accent); font-weight:700;}
+  .fab{position:fixed; right:18px; bottom:78px; background:var(--accent); width:54px; height:54px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center; font-size:1.7rem; color:#fff; box-shadow:0 6px 16px rgba(29,155,240,.4); cursor:pointer; z-index:20;}
+  .fab:hover{background:var(--accent-hover);}
   input, select, button, textarea{
-    width:100%; padding:14px; border-radius:12px; border:1px solid #2a3548;
-    background:var(--card2); color:var(--text); font-size:1rem; margin-top:6px;
+    width:100%; padding:13px 14px; border-radius:14px; border:1px solid var(--border);
+    background:var(--card2); color:var(--text); font-size:1rem; margin-top:6px; font-family:inherit;
   }
-  label.field-label{display:block; margin-top:14px; color:var(--muted); font-size:0.78rem; text-transform:uppercase;}
-  .btn-primary{background:var(--orange); color:#1a1206; font-weight:700; border:none; cursor:pointer; margin-top:20px;}
-  .btn-secondary{background:transparent; border:1px solid #2a3548; color:var(--text); cursor:pointer;}
+  input::placeholder{color:var(--muted);}
+  label.field-label{display:block; margin-top:14px; color:var(--muted); font-size:0.8rem;}
+  .btn-primary{background:var(--accent); color:#fff; font-weight:700; border:none; cursor:pointer; margin-top:20px; border-radius:9999px;}
+  .btn-primary:hover{background:var(--accent-hover);}
+  .btn-secondary{background:transparent; border:1px solid var(--border); color:var(--text); cursor:pointer; border-radius:9999px; font-weight:700;}
+  .btn-secondary:hover{background:var(--card2);}
   .tabs{display:flex; gap:8px; margin-top:10px;}
-  .tab{flex:1; text-align:center; padding:12px; border-radius:12px; background:var(--card2); cursor:pointer; font-weight:600; font-size:0.82rem; color:var(--muted);}
-  .tab.active{background:var(--orange); color:#1a1206;}
+  .tab{flex:1; text-align:center; padding:12px; border-radius:9999px; background:var(--card2); border:1px solid var(--border); cursor:pointer; font-weight:600; font-size:0.82rem; color:var(--muted);}
+  .tab.active{background:var(--accent); color:#fff; border-color:var(--accent);}
   .modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:flex-end; justify-content:center; z-index:50;}
-  .modal{background:#0f1524; width:100%; max-width:520px; border-radius:22px 22px 0 0; padding:22px; max-height:90vh; overflow-y:auto;}
+  .modal{background:#000; border:1px solid var(--border); width:100%; max-width:520px; border-radius:22px 22px 0 0; padding:22px; max-height:90vh; overflow-y:auto;}
   .modal-head{display:flex; justify-content:space-between; align-items:center;}
-  .close-btn{background:var(--card2); border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; color:var(--text); font-size:1rem;}
+  .close-btn{background:var(--card2); border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; color:var(--text); font-size:1rem; padding:0;}
   .hidden{display:none !important;}
   .auth-box{max-width:400px; margin:60px auto; padding:24px;}
-  .link-btn{background:none; border:none; color:var(--orange); cursor:pointer; padding:0; margin-top:10px; font-size:0.85rem;}
+  .link-btn{background:none; border:none; color:var(--accent); cursor:pointer; padding:0; margin-top:10px; font-size:0.85rem; font-weight:600;}
   .error-msg{color:var(--danger); font-size:0.85rem; margin-top:8px;}
   .empty{color:var(--muted); text-align:center; padding:30px 0; font-size:0.9rem;}
+
+  /* ---- desktop shell ---- */
+  .app-shell{display:block;}
+  .side-nav, .right-col{display:none;}
+  .side-logo{font-size:1.25rem; font-weight:800; padding:8px 12px 22px;}
+  .side-item{display:flex; align-items:center; gap:14px; padding:12px 14px; border-radius:9999px; color:var(--text); cursor:pointer; font-size:1.02rem; margin-bottom:4px;}
+  .side-item:hover{background:var(--card2);}
+  .side-item.active{font-weight:700; color:var(--accent);}
+  .side-icon{font-size:1.25rem; width:24px; text-align:center;}
+  .side-add-btn{margin-top:18px; width:100%; padding:14px;}
+  .widget-title{font-weight:700; margin-bottom:10px; font-size:1rem;}
+  .mini-row{display:flex; justify-content:space-between; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.88rem;}
+  .mini-row:last-child{border-bottom:none;}
+  .mini-row-amt{color:var(--muted); font-weight:600; white-space:nowrap;}
+
+  @media (min-width:768px){
+    .modal-overlay{align-items:center;}
+    .modal{border-radius:20px; max-width:480px; max-height:85vh;}
+  }
+
+  @media (min-width:1024px){
+    body{padding-bottom:40px;}
+    .app-shell{display:flex; justify-content:center; align-items:flex-start; gap:28px; max-width:1180px; margin:0 auto; padding:0 20px;}
+    .side-nav{display:flex; flex-direction:column; width:240px; flex:0 0 240px; position:sticky; top:24px; padding:24px 6px;}
+    .right-col{display:flex; flex-direction:column; width:320px; flex:0 0 320px; gap:16px; position:sticky; top:24px; padding-top:24px;}
+    .main-col{flex:0 0 600px; border-left:1px solid var(--border); border-right:1px solid var(--border); min-height:100vh;}
+    .main-col .container{max-width:600px; margin:0; padding:24px 24px 60px;}
+    #bottomNav, .fab{display:none !important;}
+  }
 </style>
 </head>
 <body>
 
 <!-- ===================== LOGIN / REGISTER ===================== -->
 <div id="authView" class="container auth-box">
-  <h1>TabunganTZ</h1>
+  <h1>Keuangan Ranting</h1>
   <p class="label" id="authTitle">Masuk ke akun kamu</p>
   <label class="field-label">Email</label>
   <input type="email" id="authEmail" placeholder="email@contoh.com" />
@@ -86,15 +124,29 @@
 </div>
 
 <!-- ===================== APP ===================== -->
-<div id="appView" class="container hidden">
+<div id="appView" class="hidden">
+<div class="app-shell">
+
+  <!-- SIDE NAV (desktop) -->
+  <nav id="sideNav" class="side-nav">
+    <div class="side-logo">Keuangan Ranting</div>
+    <div class="side-item active" data-v="homeView" onclick="showView('homeView')"><span class="side-icon">🏠</span><span>Beranda</span></div>
+    <div class="side-item" data-v="pocketsView" onclick="showView('pocketsView')"><span class="side-icon">👛</span><span>Kantong</span></div>
+    <div class="side-item" data-v="historyView" onclick="showView('historyView')"><span class="side-icon">🕓</span><span>Riwayat</span></div>
+    <div class="side-item" data-v="settingsView" onclick="showView('settingsView')"><span class="side-icon">⚙️</span><span>Pengaturan</span></div>
+    <button class="btn-primary side-add-btn" onclick="openTxModal()">Tambah mutasi</button>
+  </nav>
+
+  <main class="main-col">
+  <div class="container">
 
   <!-- HOME -->
   <div id="homeView">
-    <p class="label">TABUNGANTZ</p>
+    <p class="brand-label">Keuangan Ranting</p>
     <h1 id="greeting">Halo!</h1>
 
     <div class="card balance-card">
-      <p class="label">Total Saldo Tergabung</p>
+      <p class="label">Total saldo tergabung</p>
       <div class="balance-amount" id="totalBalance">Rp 0</div>
       <div class="row">
         <div class="mini-card">
@@ -108,21 +160,21 @@
           <div class="icon out">↑</div>
           <div>
             <div class="label">Pengeluaran</div>
-            <div style="color:var(--orange-soft); font-weight:700;" id="totalExpense">Rp 0</div>
+            <div style="color:var(--red); font-weight:700;" id="totalExpense">Rp 0</div>
           </div>
         </div>
       </div>
     </div>
 
     <div class="section-head">
-      <span class="label" style="margin:0;">Kantong Utama</span>
-      <a onclick="showView('pocketsView')">Lihat Semua</a>
+      <span class="label" style="margin:0;">Kantong utama</span>
+      <a onclick="showView('pocketsView')">Lihat semua</a>
     </div>
     <div class="grid2" id="pocketsPreview"></div>
 
     <div class="section-head">
-      <span class="label" style="margin:0;">Mutasi Terbaru</span>
-      <a onclick="showView('historyView')">Lihat Semua</a>
+      <span class="label" style="margin:0;">Mutasi terbaru</span>
+      <a onclick="showView('historyView')">Lihat semua</a>
     </div>
     <div id="txPreview"></div>
   </div>
@@ -130,15 +182,15 @@
   <!-- POCKETS (KANTONG) -->
   <div id="pocketsView" class="hidden">
     <div class="section-head" style="margin-top:0;">
-      <h1 style="margin:0; font-size:1.5rem;">Semua Kantong</h1>
-      <a onclick="openPocketModal()" style="background:var(--orange); color:#1a1206; padding:10px 16px; border-radius:20px; font-weight:700; font-size:0.85rem;">+ Tambah</a>
+      <h1 style="margin:0; font-size:1.4rem;">Semua kantong</h1>
+      <a onclick="openPocketModal()" style="background:var(--accent); color:#fff; padding:10px 16px; border-radius:9999px; font-weight:700; font-size:0.85rem;">+ Tambah</a>
     </div>
     <div class="grid2" id="pocketsFull"></div>
   </div>
 
   <!-- HISTORY -->
   <div id="historyView" class="hidden">
-    <h1 style="font-size:1.5rem;">Riwayat Mutasi</h1>
+    <h1 style="font-size:1.4rem;">Riwayat mutasi</h1>
     <input type="text" id="searchTx" placeholder="Cari transaksi..." oninput="renderHistory()" />
     <div class="tabs">
       <div class="tab active" data-filter="ALL" onclick="setTxFilter('ALL')">Semua</div>
@@ -151,35 +203,54 @@
 
   <!-- SETTINGS -->
   <div id="settingsView" class="hidden">
-    <h1 style="font-size:1.5rem;">Pengaturan</h1>
+    <h1 style="font-size:1.4rem;">Pengaturan</h1>
     <div class="card">
       <div style="font-weight:700;">Akun</div>
       <p class="label" id="userEmailLabel" style="margin-top:6px;"></p>
     </div>
     <div class="card">
-      <div style="font-weight:700; margin-bottom:6px;">Export Data</div>
-      <button class="btn-secondary" onclick="exportCSV()">Download CSV</button>
+      <div style="font-weight:700; margin-bottom:10px;">Export data</div>
+      <button class="btn-secondary" onclick="exportCSV()">Unduh CSV</button>
+      <button class="btn-secondary" style="margin-top:10px;" onclick="exportExcel()">Unduh Excel</button>
+      <button class="btn-secondary" style="margin-top:10px;" onclick="exportPDF()">Unduh PDF</button>
     </div>
     <div class="card">
-      <button class="btn-secondary" style="color:var(--danger); border-color:var(--danger);" onclick="logout()">Keluar Akun</button>
+      <button class="btn-secondary" style="color:var(--danger); border-color:var(--danger);" onclick="logout()">Keluar akun</button>
     </div>
   </div>
+
+  </div>
+  </main>
+
+  <!-- RIGHT COLUMN (desktop) -->
+  <aside class="right-col">
+    <div class="card">
+      <div class="widget-title">Ringkasan kantong</div>
+      <div id="rightPockets"></div>
+    </div>
+    <div class="card">
+      <div class="widget-title">Kategori teratas</div>
+      <div id="rightCategories"></div>
+    </div>
+  </aside>
+
+</div>
 </div>
 
-<!-- BOTTOM NAV -->
+<!-- BOTTOM NAV (mobile) -->
 <nav id="bottomNav" class="hidden">
   <div class="item active" data-v="homeView" onclick="showView('homeView')">🏠<span>Beranda</span></div>
   <div class="item" data-v="pocketsView" onclick="showView('pocketsView')">👛<span>Kantong</span></div>
-  <div class="fab" onclick="openTxModal()">+</div>
   <div class="item" data-v="historyView" onclick="showView('historyView')">🕓<span>Riwayat</span></div>
   <div class="item" data-v="settingsView" onclick="showView('settingsView')">⚙️<span>Sistem</span></div>
 </nav>
+<div id="fabBtn" class="fab hidden" onclick="openTxModal()">+</div>
 
 <!-- MODAL: TAMBAH MUTASI -->
 <div id="txModal" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-head">
-      <h2 style="margin:0;">Tambah Mutasi</h2>
+      <h2 style="margin:0;">Tambah mutasi</h2>
       <button class="close-btn" onclick="closeModal('txModal')">✕</button>
     </div>
     <div class="tabs">
@@ -191,14 +262,14 @@
     <input type="number" id="txAmount" placeholder="0" />
 
     <div id="txSinglePocketWrap">
-      <label class="field-label">Pilih Kantong</label>
+      <label class="field-label">Pilih kantong</label>
       <select id="txPocket"></select>
     </div>
 
     <div id="txTransferWrap" class="hidden">
-      <label class="field-label">Dari Kantong</label>
+      <label class="field-label">Dari kantong</label>
       <select id="txFromPocket"></select>
-      <label class="field-label">Ke Kantong</label>
+      <label class="field-label">Ke kantong</label>
       <select id="txToPocket"></select>
     </div>
 
@@ -206,7 +277,7 @@
     <input type="text" id="txCategory" placeholder="Contoh: Bensin, Keluarga" />
     <label class="field-label">Catatan</label>
     <input type="text" id="txNote" placeholder="Contoh: Beli makan siang" />
-    <button class="btn-primary" onclick="submitTransaction()">Kirim Mutasi</button>
+    <button class="btn-primary" onclick="submitTransaction()">Kirim mutasi</button>
     <p class="error-msg" id="txError"></p>
   </div>
 </div>
@@ -215,19 +286,19 @@
 <div id="pocketModal" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-head">
-      <h2 style="margin:0;">Tambah Kantong</h2>
+      <h2 style="margin:0;">Tambah kantong</h2>
       <button class="close-btn" onclick="closeModal('pocketModal')">✕</button>
     </div>
-    <label class="field-label">Nama Kantong</label>
+    <label class="field-label">Nama kantong</label>
     <input type="text" id="pocketName" placeholder="Contoh: Bensin" />
     <label class="field-label">Tipe</label>
     <select id="pocketType">
       <option value="BAYAR">BAYAR (untuk pengeluaran rutin)</option>
       <option value="TABUNG">TABUNG (untuk simpanan)</option>
     </select>
-    <label class="field-label">Saldo Awal (Rp)</label>
+    <label class="field-label">Saldo awal (Rp)</label>
     <input type="number" id="pocketInitialBalance" placeholder="0" />
-    <button class="btn-primary" onclick="submitPocket()">Buat Kantong</button>
+    <button class="btn-primary" onclick="submitPocket()">Buat kantong</button>
     <p class="error-msg" id="pocketError"></p>
   </div>
 </div>
@@ -291,6 +362,7 @@ async function onLoggedIn(user){
   document.getElementById('authView').classList.add('hidden');
   document.getElementById('appView').classList.remove('hidden');
   document.getElementById('bottomNav').classList.remove('hidden');
+  document.getElementById('fabBtn').classList.remove('hidden');
   document.getElementById('greeting').textContent = "Halo, " + user.email.split('@')[0] + "!";
   document.getElementById('userEmailLabel').textContent = user.email;
   await loadData();
@@ -302,6 +374,9 @@ function showView(id){
     document.getElementById(v).classList.toggle('hidden', v!==id);
   });
   document.querySelectorAll('#bottomNav .item').forEach(el=>{
+    el.classList.toggle('active', el.dataset.v===id);
+  });
+  document.querySelectorAll('#sideNav .side-item').forEach(el=>{
     el.classList.toggle('active', el.dataset.v===id);
   });
   if(id==='historyView') renderHistory();
@@ -326,6 +401,7 @@ function renderAll(){
   renderPockets();
   renderRecentTx();
   renderHistory();
+  renderRightPanel();
   fillPocketSelects();
 }
 
@@ -344,7 +420,7 @@ function pocketCardHTML(p, withDelete){
     <span class="badge">${p.type}</span>
     <div class="pocket-name">${p.name}</div>
     <div class="pocket-code">${p.code}</div>
-    <div class="sisa">Sisa Saldo</div>
+    <div class="sisa">Sisa saldo</div>
     <div class="pocket-balance">${rupiah(p.balance)}</div>
     ${withDelete ? `<button class="close-btn" style="position:absolute; top:16px; right:16px;" onclick="deletePocket('${p.id}')">🗑</button>` : ''}
   </div>`;
@@ -396,6 +472,27 @@ function renderHistory(){
   if(q) list = list.filter(t => (t.note||'').toLowerCase().includes(q) || (t.category||'').toLowerCase().includes(q));
   document.getElementById('historyList').innerHTML =
     list.map(txRowHTML).join('') || `<div class="empty">Tidak ada transaksi</div>`;
+}
+
+function renderRightPanel(){
+  const rp = document.getElementById('rightPockets');
+  if(rp){
+    rp.innerHTML = pockets.slice(0,5).map(p=>`
+      <div class="mini-row"><span>${p.name}</span><span class="mini-row-amt">${rupiah(p.balance)}</span></div>
+    `).join('') || `<div class="empty">Belum ada kantong</div>`;
+  }
+  const rc = document.getElementById('rightCategories');
+  if(rc){
+    const catTotals = {};
+    transactions.filter(t=>t.type==='PENGELUARAN').forEach(t=>{
+      const c = t.category || 'Lainnya';
+      catTotals[c] = (catTotals[c]||0) + Number(t.amount);
+    });
+    const sorted = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    rc.innerHTML = sorted.map(([cat,amt])=>`
+      <div class="mini-row"><span>${cat}</span><span class="mini-row-amt">${rupiah(amt)}</span></div>
+    `).join('') || `<div class="empty">Belum ada pengeluaran</div>`;
+  }
 }
 
 function fillPocketSelects(){
@@ -498,16 +595,55 @@ async function submitTransaction(){
 }
 
 /* ---------------- EXPORT ---------------- */
+function exportRows(){
+  return transactions.map(t=>{
+    const pocket = pockets.find(p=>p.id===t.pocket_id);
+    return {
+      Tanggal: new Date(t.created_at).toLocaleDateString('id-ID'),
+      Tipe: t.type,
+      Kategori: t.category || '',
+      Catatan: t.note || '',
+      Jumlah: Number(t.amount),
+      Kantong: pocket ? pocket.name : ''
+    };
+  });
+}
+
 function exportCSV(){
   let csv = "Tanggal,Tipe,Kategori,Catatan,Jumlah,Kantong\n";
-  transactions.forEach(t=>{
-    const pocket = pockets.find(p=>p.id===t.pocket_id);
-    csv += `${new Date(t.created_at).toLocaleDateString('id-ID')},${t.type},${t.category||''},${t.note||''},${t.amount},${pocket?pocket.name:''}\n`;
+  exportRows().forEach(r=>{
+    csv += `${r.Tanggal},${r.Tipe},${r.Kategori},${r.Catatan},${r.Jumlah},${r.Kantong}\n`;
   });
   const blob = new Blob([csv], {type:'text/csv'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = 'riwayat-mutasi.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportExcel(){
+  const rows = exportRows();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:12},{wch:14},{wch:16},{wch:24},{wch:14},{wch:16}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Mutasi');
+  XLSX.writeFile(wb, 'riwayat-mutasi.xlsx');
+}
+
+function exportPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(14);
+  doc.text('Riwayat Mutasi - Keuangan Ranting', 14, 16);
+  const rows = exportRows().map(r => [r.Tanggal, r.Tipe, r.Kategori || '-', r.Catatan || '-', rupiah(r.Jumlah), r.Kantong || '-']);
+  doc.autoTable({
+    startY: 22,
+    head: [['Tanggal','Tipe','Kategori','Catatan','Jumlah','Kantong']],
+    body: rows,
+    styles:{ fontSize:8 },
+    headStyles:{ fillColor:[29,155,240] }
+  });
+  doc.save('riwayat-mutasi.pdf');
 }
 
 /* ---------------- INIT ---------------- */
