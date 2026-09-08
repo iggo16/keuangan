@@ -37,21 +37,23 @@
   .mini-card .value{font-size:0.98rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:6px;}
   .pocket{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; position:relative;}
+  .pocket-actions{position:absolute; top:14px; right:14px; display:flex; gap:6px;}
   .badge{display:inline-block; background:transparent; border:1px solid var(--accent); color:var(--accent); font-weight:700; font-size:0.7rem; padding:4px 12px; border-radius:9999px;}
-  .pocket-name{font-size:1.1rem; font-weight:700; margin:10px 0 2px;}
+  .pocket-name{font-size:1.1rem; font-weight:700; margin:10px 0 2px; padding-right:60px;}
   .pocket-code{color:var(--muted); font-size:0.8rem;}
   .pocket-balance{margin-top:14px; font-size:1.05rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .pocket .sisa{color:var(--muted); font-size:0.75rem;}
   .section-head{display:flex; justify-content:space-between; align-items:center; margin:22px 0 10px;}
   .section-head a{color:var(--accent); font-size:0.85rem; text-decoration:none; cursor:pointer; font-weight:600;}
-  .tx{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; gap:12px; margin-bottom:10px;}
+  .tx{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; gap:10px; margin-bottom:10px;}
   .tx .icon{width:36px; height:36px; flex:0 0 36px; border-radius:50%; display:flex; align-items:center; justify-content:center;}
   .tx-info{flex:1; min-width:0;}
-  .tx-title{font-weight:600;}
-  .tx-sub{color:var(--muted); font-size:0.78rem;}
+  .tx-title{font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .tx-sub{color:var(--muted); font-size:0.78rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .tx-amount{white-space:nowrap; font-size:0.95rem;}
   .tx-amount.pos{color:var(--green); font-weight:700;}
   .tx-amount.neg{color:var(--red); font-weight:700;}
+  .tx-actions{display:flex; gap:6px; flex:0 0 auto;}
   nav#bottomNav{position:fixed; bottom:0; left:0; right:0; background:var(--bg); border-top:1px solid var(--border);
       display:flex; justify-content:space-around; padding:10px 0 16px; z-index:20;}
   nav#bottomNav .item{display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--muted); font-size:0.68rem; cursor:pointer; padding:6px 14px;}
@@ -75,7 +77,10 @@
   .modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:flex-end; justify-content:center; z-index:50;}
   .modal{background:#000; border:1px solid var(--border); width:100%; max-width:520px; border-radius:22px 22px 0 0; padding:22px; max-height:90vh; overflow-y:auto;}
   .modal-head{display:flex; justify-content:space-between; align-items:center;}
-  .close-btn{background:var(--card2); border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; color:var(--text); padding:0;}
+  .close-btn{background:var(--card2); border-radius:50%; width:34px; height:34px; flex:0 0 34px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; color:var(--text); padding:0; margin-top:0;}
+  .close-btn:hover{background:var(--border);}
+  .close-btn.sm{width:30px; height:30px; flex:0 0 30px;}
+  .close-btn.danger:hover{background:#2d0e12; color:var(--red);}
   .hidden{display:none !important;}
   .auth-box{max-width:400px; margin:60px auto; padding:24px;}
   .link-btn{background:none; border:none; color:var(--accent); cursor:pointer; padding:0; margin-top:10px; font-size:0.85rem; font-weight:600;}
@@ -250,11 +255,11 @@
 </nav>
 <div id="fabBtn" class="fab hidden" onclick="openTxModal()" data-icon="plus"></div>
 
-<!-- MODAL: TAMBAH MUTASI -->
+<!-- MODAL: TAMBAH / EDIT MUTASI -->
 <div id="txModal" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-head">
-      <h2 style="margin:0;">Tambah mutasi</h2>
+      <h2 style="margin:0;" id="txModalTitle">Tambah mutasi</h2>
       <button class="close-btn" onclick="closeModal('txModal')" data-icon="close"></button>
     </div>
     <div class="tabs">
@@ -281,16 +286,16 @@
     <input type="text" id="txCategory" placeholder="Contoh: Bensin, Keluarga" />
     <label class="field-label">Catatan</label>
     <input type="text" id="txNote" placeholder="Contoh: Beli makan siang" />
-    <button class="btn-primary" onclick="submitTransaction()">Kirim mutasi</button>
+    <button class="btn-primary" id="txSubmitBtn" onclick="submitTransaction()">Kirim mutasi</button>
     <p class="error-msg" id="txError"></p>
   </div>
 </div>
 
-<!-- MODAL: TAMBAH KANTONG -->
+<!-- MODAL: TAMBAH / EDIT KANTONG -->
 <div id="pocketModal" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-head">
-      <h2 style="margin:0;">Tambah kantong</h2>
+      <h2 style="margin:0;" id="pocketModalTitle">Tambah kantong</h2>
       <button class="close-btn" onclick="closeModal('pocketModal')" data-icon="close"></button>
     </div>
     <label class="field-label">Nama kantong</label>
@@ -300,9 +305,9 @@
       <option value="BAYAR">BAYAR (untuk pengeluaran rutin)</option>
       <option value="TABUNG">TABUNG (untuk simpanan)</option>
     </select>
-    <label class="field-label">Saldo awal (Rp)</label>
+    <label class="field-label" id="pocketBalanceLabel">Saldo awal (Rp)</label>
     <input type="number" id="pocketInitialBalance" placeholder="0" />
-    <button class="btn-primary" onclick="submitPocket()">Buat kantong</button>
+    <button class="btn-primary" id="pocketSubmitBtn" onclick="submitPocket()">Buat kantong</button>
     <p class="error-msg" id="pocketError"></p>
   </div>
 </div>
@@ -322,6 +327,8 @@ let transactions = [];
 let isRegisterMode = false;
 let txType = "PENGELUARAN";
 let txFilter = "ALL";
+let editingPocketId = null;
+let editingTxId = null;
 
 const rupiah = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
 
@@ -340,6 +347,7 @@ const ICONS = {
   arrowUp: svgIcon('<path d="M12 19V5"/><path d="m6 11 6-6 6 6"/>', 16),
   swap: svgIcon('<path d="m17 3 4 4-4 4"/><path d="M21 7H9"/><path d="m7 21-4-4 4-4"/><path d="M3 17h12"/>', 16),
   trash: svgIcon('<path d="M5 7h14"/><path d="M10 11v5"/><path d="M14 11v5"/><path d="M6.5 7l.8 12a1.5 1.5 0 0 0 1.5 1.4h6.4a1.5 1.5 0 0 0 1.5-1.4l.8-12"/><path d="M9.5 7V4.8A.8.8 0 0 1 10.3 4h3.4a.8.8 0 0 1 .8.8V7"/>', 15, 1.6),
+  edit: svgIcon('<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>', 15, 1.6),
   plus: svgIcon('<path d="M12 5v14"/><path d="M5 12h14"/>', 24),
   close: svgIcon('<path d="M6 6l12 12"/><path d="M18 6 6 18"/>', 16)
 };
@@ -443,15 +451,19 @@ function renderTotals(){
   document.getElementById('totalExpense').textContent = rupiah(expense);
 }
 
-function pocketCardHTML(p, withDelete){
+function pocketCardHTML(p, withActions){
   return `
   <div class="pocket">
     <span class="badge">${p.type}</span>
+    ${withActions ? `
+    <div class="pocket-actions">
+      <button class="close-btn sm" onclick="openPocketModal('${p.id}')" title="Edit kantong">${ICONS.edit}</button>
+      <button class="close-btn sm danger" onclick="deletePocket('${p.id}')" title="Hapus kantong">${ICONS.trash}</button>
+    </div>` : ''}
     <div class="pocket-name">${p.name}</div>
     <div class="pocket-code">${p.code}</div>
     <div class="sisa">Sisa saldo</div>
     <div class="pocket-balance">${rupiah(p.balance)}</div>
-    ${withDelete ? `<button class="close-btn" style="position:absolute; top:16px; right:16px;" onclick="deletePocket('${p.id}')">${ICONS.trash}</button>` : ''}
   </div>`;
 }
 
@@ -480,6 +492,10 @@ function txRowHTML(t){
       <div class="tx-sub">${t.category || ''} • ${dateStr}${pocket ? ' • '+pocket.name : ''}</div>
     </div>
     <div class="tx-amount ${amtCls}">${sign} ${rupiah(t.amount)}</div>
+    <div class="tx-actions">
+      <button class="close-btn sm" onclick="openTxModal('${t.id}')" title="Edit mutasi">${ICONS.edit}</button>
+      <button class="close-btn sm danger" onclick="deleteTransaction('${t.id}')" title="Hapus mutasi">${ICONS.trash}</button>
+    </div>
   </div>`;
 }
 
@@ -532,25 +548,48 @@ function fillPocketSelects(){
 }
 
 /* ---------------- POCKET CRUD ---------------- */
-function openPocketModal(){
+function openPocketModal(id){
+  editingPocketId = id || null;
   document.getElementById('pocketError').textContent = '';
-  document.getElementById('pocketName').value = '';
-  document.getElementById('pocketInitialBalance').value = '';
+
+  if(editingPocketId){
+    const p = pockets.find(x=>x.id===editingPocketId);
+    if(!p){ editingPocketId = null; return; }
+    document.getElementById('pocketName').value = p.name;
+    document.getElementById('pocketType').value = p.type;
+    document.getElementById('pocketInitialBalance').value = p.balance;
+    document.getElementById('pocketModalTitle').textContent = 'Edit kantong';
+    document.getElementById('pocketBalanceLabel').textContent = 'Saldo saat ini (Rp)';
+    document.getElementById('pocketSubmitBtn').textContent = 'Simpan perubahan';
+  } else {
+    document.getElementById('pocketName').value = '';
+    document.getElementById('pocketType').value = 'BAYAR';
+    document.getElementById('pocketInitialBalance').value = '';
+    document.getElementById('pocketModalTitle').textContent = 'Tambah kantong';
+    document.getElementById('pocketBalanceLabel').textContent = 'Saldo awal (Rp)';
+    document.getElementById('pocketSubmitBtn').textContent = 'Buat kantong';
+  }
   document.getElementById('pocketModal').classList.remove('hidden');
 }
 
 async function submitPocket(){
   const name = document.getElementById('pocketName').value.trim();
   const type = document.getElementById('pocketType').value;
-  const initial = Number(document.getElementById('pocketInitialBalance').value || 0);
+  const balanceVal = Number(document.getElementById('pocketInitialBalance').value || 0);
   const errEl = document.getElementById('pocketError');
   if(!name){ errEl.textContent = "Nama kantong wajib diisi."; return; }
 
-  const code = 'PKT-' + Math.floor(100000 + Math.random()*899999);
-  const { error } = await sb.from('pockets').insert({
-    user_id: currentUser.id, name, code, type, balance: initial
-  });
-  if(error){ errEl.textContent = error.message; return; }
+  if(editingPocketId){
+    const { error } = await sb.from('pockets').update({ name, type, balance: balanceVal }).eq('id', editingPocketId);
+    if(error){ errEl.textContent = error.message; return; }
+  } else {
+    const code = 'PKT-' + Math.floor(100000 + Math.random()*899999);
+    const { error } = await sb.from('pockets').insert({
+      user_id: currentUser.id, name, code, type, balance: balanceVal
+    });
+    if(error){ errEl.textContent = error.message; return; }
+  }
+  editingPocketId = null;
   closeModal('pocketModal');
   await loadData();
 }
@@ -562,12 +601,33 @@ async function deletePocket(id){
 }
 
 /* ---------------- TRANSACTION CRUD ---------------- */
-function openTxModal(){
+function openTxModal(id){
+  editingTxId = id || null;
   document.getElementById('txError').textContent = '';
-  document.getElementById('txAmount').value = '';
-  document.getElementById('txCategory').value = '';
-  document.getElementById('txNote').value = '';
-  setTxType('PENGELUARAN');
+
+  if(editingTxId){
+    const t = transactions.find(x=>x.id===editingTxId);
+    if(!t){ editingTxId = null; return; }
+    document.getElementById('txAmount').value = t.amount;
+    document.getElementById('txCategory').value = t.category || '';
+    document.getElementById('txNote').value = t.note || '';
+    setTxType(t.type);
+    if(t.type === 'TRANSFER'){
+      document.getElementById('txFromPocket').value = t.pocket_id;
+      document.getElementById('txToPocket').value = t.related_pocket_id;
+    } else {
+      document.getElementById('txPocket').value = t.pocket_id;
+    }
+    document.getElementById('txModalTitle').textContent = 'Edit mutasi';
+    document.getElementById('txSubmitBtn').textContent = 'Simpan perubahan';
+  } else {
+    document.getElementById('txAmount').value = '';
+    document.getElementById('txCategory').value = '';
+    document.getElementById('txNote').value = '';
+    setTxType('PENGELUARAN');
+    document.getElementById('txModalTitle').textContent = 'Tambah mutasi';
+    document.getElementById('txSubmitBtn').textContent = 'Kirim mutasi';
+  }
   document.getElementById('txModal').classList.remove('hidden');
 }
 
@@ -576,6 +636,38 @@ function setTxType(type){
   document.querySelectorAll('#txModal .tab').forEach(t=>t.classList.toggle('active', t.dataset.type===type));
   document.getElementById('txSinglePocketWrap').classList.toggle('hidden', type==='TRANSFER');
   document.getElementById('txTransferWrap').classList.toggle('hidden', type!=='TRANSFER');
+}
+
+/* Undo the balance effect of an existing transaction (used before edit/delete) */
+async function reverseTransactionEffect(t){
+  if(t.type === 'TRANSFER'){
+    const from = pockets.find(p=>p.id===t.pocket_id);
+    const to = pockets.find(p=>p.id===t.related_pocket_id);
+    if(from){ from.balance = Number(from.balance) + Number(t.amount); await sb.from('pockets').update({ balance: from.balance }).eq('id', from.id); }
+    if(to){ to.balance = Number(to.balance) - Number(t.amount); await sb.from('pockets').update({ balance: to.balance }).eq('id', to.id); }
+  } else {
+    const p = pockets.find(x=>x.id===t.pocket_id);
+    if(p){
+      p.balance = t.type === 'PEMASUKAN' ? Number(p.balance) - Number(t.amount) : Number(p.balance) + Number(t.amount);
+      await sb.from('pockets').update({ balance: p.balance }).eq('id', p.id);
+    }
+  }
+}
+
+/* Apply the balance effect of a (new or edited) transaction */
+async function applyTransactionEffect(type, pocketId, relatedPocketId, amount){
+  if(type === 'TRANSFER'){
+    const from = pockets.find(p=>p.id===pocketId);
+    const to = pockets.find(p=>p.id===relatedPocketId);
+    from.balance = Number(from.balance) - amount;
+    to.balance = Number(to.balance) + amount;
+    await sb.from('pockets').update({ balance: from.balance }).eq('id', from.id);
+    await sb.from('pockets').update({ balance: to.balance }).eq('id', to.id);
+  } else {
+    const p = pockets.find(x=>x.id===pocketId);
+    p.balance = type === 'PEMASUKAN' ? Number(p.balance) + amount : Number(p.balance) - amount;
+    await sb.from('pockets').update({ balance: p.balance }).eq('id', p.id);
+  }
 }
 
 async function submitTransaction(){
@@ -588,38 +680,61 @@ async function submitTransaction(){
   if(amount <= 0){ errEl.textContent = "Jumlah harus lebih dari 0."; return; }
   if(pockets.length === 0){ errEl.textContent = "Buat kantong dulu sebelum mencatat mutasi."; return; }
 
+  let pocketId, relatedPocketId = null;
   if(txType === 'TRANSFER'){
-    const fromId = document.getElementById('txFromPocket').value;
-    const toId = document.getElementById('txToPocket').value;
-    if(fromId === toId){ errEl.textContent = "Kantong asal dan tujuan tidak boleh sama."; return; }
-    const fromPocket = pockets.find(p=>p.id===fromId);
-    if(Number(fromPocket.balance) < amount){ errEl.textContent = "Saldo kantong asal tidak cukup."; return; }
-
-    await sb.from('transactions').insert({
-      user_id: currentUser.id, pocket_id: fromId, related_pocket_id: toId,
-      type: 'TRANSFER', amount, category, note
-    });
-    await sb.from('pockets').update({ balance: Number(fromPocket.balance) - amount }).eq('id', fromId);
-    const toPocket = pockets.find(p=>p.id===toId);
-    await sb.from('pockets').update({ balance: Number(toPocket.balance) + amount }).eq('id', toId);
-
+    pocketId = document.getElementById('txFromPocket').value;
+    relatedPocketId = document.getElementById('txToPocket').value;
+    if(pocketId === relatedPocketId){ errEl.textContent = "Kantong asal dan tujuan tidak boleh sama."; return; }
   } else {
-    const pocketId = document.getElementById('txPocket').value;
-    const pocket = pockets.find(p=>p.id===pocketId);
-    if(txType === 'PENGELUARAN' && Number(pocket.balance) < amount){
-      errEl.textContent = "Saldo kantong tidak cukup."; return;
-    }
-    await sb.from('transactions').insert({
-      user_id: currentUser.id, pocket_id: pocketId,
-      type: txType, amount, category, note
-    });
-    const newBalance = txType === 'PEMASUKAN'
-      ? Number(pocket.balance) + amount
-      : Number(pocket.balance) - amount;
-    await sb.from('pockets').update({ balance: newBalance }).eq('id', pocketId);
+    pocketId = document.getElementById('txPocket').value;
   }
 
+  const oldTx = editingTxId ? transactions.find(x=>x.id===editingTxId) : null;
+
+  // Kalau sedang edit, batalkan dulu efek saldo dari mutasi lama
+  if(oldTx) await reverseTransactionEffect(oldTx);
+
+  // Validasi saldo cukup untuk efek yang baru
+  if(txType === 'TRANSFER'){
+    const fromPocket = pockets.find(p=>p.id===pocketId);
+    if(Number(fromPocket.balance) < amount){
+      errEl.textContent = "Saldo kantong asal tidak cukup.";
+      if(oldTx) await applyTransactionEffect(oldTx.type, oldTx.pocket_id, oldTx.related_pocket_id, Number(oldTx.amount));
+      return;
+    }
+  } else if(txType === 'PENGELUARAN'){
+    const p = pockets.find(x=>x.id===pocketId);
+    if(Number(p.balance) < amount){
+      errEl.textContent = "Saldo kantong tidak cukup.";
+      if(oldTx) await applyTransactionEffect(oldTx.type, oldTx.pocket_id, oldTx.related_pocket_id, Number(oldTx.amount));
+      return;
+    }
+  }
+
+  await applyTransactionEffect(txType, pocketId, relatedPocketId, amount);
+
+  if(editingTxId){
+    await sb.from('transactions').update({
+      pocket_id: pocketId, related_pocket_id: relatedPocketId,
+      type: txType, amount, category, note
+    }).eq('id', editingTxId);
+  } else {
+    await sb.from('transactions').insert({
+      user_id: currentUser.id, pocket_id: pocketId, related_pocket_id: relatedPocketId,
+      type: txType, amount, category, note
+    });
+  }
+
+  editingTxId = null;
   closeModal('txModal');
+  await loadData();
+}
+
+async function deleteTransaction(id){
+  if(!confirm('Hapus mutasi ini? Saldo kantong akan disesuaikan kembali.')) return;
+  const t = transactions.find(x=>x.id===id);
+  if(t) await reverseTransactionEffect(t);
+  await sb.from('transactions').delete().eq('id', id);
   await loadData();
 }
 
