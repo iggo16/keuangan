@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TabunganTZ Clone</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161d2b; --card2:#1c2537; --orange:#f5860a;
+    --orange-soft:#ffb15c; --green:#1fd28f; --red:#f5860a; --text:#eef1f7;
+    --muted:#8b93a7; --danger:#e05a3b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Segoe UI',Roboto,Arial,sans-serif;
+    background:var(--bg); color:var(--text); min-height:100vh;
+    padding-bottom:90px;
+  }
+  .container{max-width:520px; margin:0 auto; padding:20px 16px;}
+  h1{font-size:1.8rem; margin:4px 0 18px;}
+  .label{color:var(--muted); font-size:0.75rem; letter-spacing:1px; text-transform:uppercase;}
+  .card{background:var(--card); border-radius:18px; padding:20px; margin-bottom:16px;}
+  .balance-card{background:var(--card);}
+  .balance-amount{font-size:2.1rem; font-weight:700; margin:8px 0 18px;}
+  .row{display:flex; gap:12px;}
+  .mini-card{flex:1; background:var(--card2); border-radius:14px; padding:14px; display:flex; align-items:center; gap:10px;}
+  .mini-card .icon{width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;}
+  .icon.in{background:#123c30; color:var(--green);}
+  .icon.out{background:#3c2412; color:var(--orange-soft);}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:6px;}
+  .pocket{background:var(--card); border-radius:16px; padding:16px; position:relative;}
+  .badge{display:inline-block; background:var(--orange); color:#1a1206; font-weight:700; font-size:0.7rem; padding:4px 12px; border-radius:20px;}
+  .pocket-name{font-size:1.15rem; font-weight:700; margin:10px 0 2px;}
+  .pocket-code{color:var(--muted); font-size:0.8rem;}
+  .pocket-balance{margin-top:14px; font-size:1.1rem; font-weight:700;}
+  .pocket .sisa{color:var(--muted); font-size:0.75rem;}
+  .section-head{display:flex; justify-content:space-between; align-items:center; margin:22px 0 10px;}
+  .section-head a{color:var(--orange); font-size:0.85rem; text-decoration:none; cursor:pointer;}
+  .tx{background:var(--card); border-radius:14px; padding:14px; display:flex; align-items:center; gap:12px; margin-bottom:10px;}
+  .tx .icon{width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;}
+  .tx-info{flex:1;}
+  .tx-title{font-weight:600;}
+  .tx-sub{color:var(--muted); font-size:0.78rem;}
+  .tx-amount.pos{color:var(--green); font-weight:700;}
+  .tx-amount.neg{color:var(--orange-soft); font-weight:700;}
+  nav{position:fixed; bottom:14px; left:50%; transform:translateX(-50%); width:94%; max-width:520px;
+      background:var(--card); border-radius:24px; display:flex; justify-content:space-around; padding:10px 4px; box-shadow:0 10px 30px rgba(0,0,0,.4);}
+  nav .item{display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--muted); font-size:0.68rem; cursor:pointer; padding:6px 10px; border-radius:14px;}
+  nav .item.active{color:var(--orange); background:rgba(245,134,10,.12);}
+  nav .fab{background:var(--orange); width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:#1a1206; margin-top:-22px; box-shadow:0 6px 18px rgba(245,134,10,.5); cursor:pointer;}
+  input, select, button, textarea{
+    width:100%; padding:14px; border-radius:12px; border:1px solid #2a3548;
+    background:var(--card2); color:var(--text); font-size:1rem; margin-top:6px;
+  }
+  label.field-label{display:block; margin-top:14px; color:var(--muted); font-size:0.78rem; text-transform:uppercase;}
+  .btn-primary{background:var(--orange); color:#1a1206; font-weight:700; border:none; cursor:pointer; margin-top:20px;}
+  .btn-secondary{background:transparent; border:1px solid #2a3548; color:var(--text); cursor:pointer;}
+  .tabs{display:flex; gap:8px; margin-top:10px;}
+  .tab{flex:1; text-align:center; padding:12px; border-radius:12px; background:var(--card2); cursor:pointer; font-weight:600; font-size:0.82rem; color:var(--muted);}
+  .tab.active{background:var(--orange); color:#1a1206;}
+  .modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:flex-end; justify-content:center; z-index:50;}
+  .modal{background:#0f1524; width:100%; max-width:520px; border-radius:22px 22px 0 0; padding:22px; max-height:90vh; overflow-y:auto;}
+  .modal-head{display:flex; justify-content:space-between; align-items:center;}
+  .close-btn{background:var(--card2); border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; color:var(--text); font-size:1rem;}
+  .hidden{display:none !important;}
+  .auth-box{max-width:400px; margin:60px auto; padding:24px;}
+  .link-btn{background:none; border:none; color:var(--orange); cursor:pointer; padding:0; margin-top:10px; font-size:0.85rem;}
+  .error-msg{color:var(--danger); font-size:0.85rem; margin-top:8px;}
+  .empty{color:var(--muted); text-align:center; padding:30px 0; font-size:0.9rem;}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN / REGISTER ===================== -->
+<div id="authView" class="container auth-box">
+  <h1>TabunganTZ</h1>
+  <p class="label" id="authTitle">Masuk ke akun kamu</p>
+  <label class="field-label">Email</label>
+  <input type="email" id="authEmail" placeholder="email@contoh.com" />
+  <label class="field-label">Password</label>
+  <input type="password" id="authPassword" placeholder="••••••••" />
+  <button class="btn-primary" id="authSubmitBtn" onclick="handleAuthSubmit()">Masuk</button>
+  <button class="link-btn" id="authToggleBtn" onclick="toggleAuthMode()">Belum punya akun? Daftar</button>
+  <p class="error-msg" id="authError"></p>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="appView" class="container hidden">
+
+  <!-- HOME -->
+  <div id="homeView">
+    <p class="label">TABUNGANTZ</p>
+    <h1 id="greeting">Halo!</h1>
+
+    <div class="card balance-card">
+      <p class="label">Total Saldo Tergabung</p>
+      <div class="balance-amount" id="totalBalance">Rp 0</div>
+      <div class="row">
+        <div class="mini-card">
+          <div class="icon in">↓</div>
+          <div>
+            <div class="label">Pemasukan</div>
+            <div style="color:var(--green); font-weight:700;" id="totalIncome">Rp 0</div>
+          </div>
+        </div>
+        <div class="mini-card">
+          <div class="icon out">↑</div>
+          <div>
+            <div class="label">Pengeluaran</div>
+            <div style="color:var(--orange-soft); font-weight:700;" id="totalExpense">Rp 0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <span class="label" style="margin:0;">Kantong Utama</span>
+      <a onclick="showView('pocketsView')">Lihat Semua</a>
+    </div>
+    <div class="grid2" id="pocketsPreview"></div>
+
+    <div class="section-head">
+      <span class="label" style="margin:0;">Mutasi Terbaru</span>
+      <a onclick="showView('historyView')">Lihat Semua</a>
+    </div>
+    <div id="txPreview"></div>
+  </div>
+
+  <!-- POCKETS (KANTONG) -->
+  <div id="pocketsView" class="hidden">
+    <div class="section-head" style="margin-top:0;">
+      <h1 style="margin:0; font-size:1.5rem;">Semua Kantong</h1>
+      <a onclick="openPocketModal()" style="background:var(--orange); color:#1a1206; padding:10px 16px; border-radius:20px; font-weight:700; font-size:0.85rem;">+ Tambah</a>
+    </div>
+    <div class="grid2" id="pocketsFull"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="historyView" class="hidden">
+    <h1 style="font-size:1.5rem;">Riwayat Mutasi</h1>
+    <input type="text" id="searchTx" placeholder="Cari transaksi..." oninput="renderHistory()" />
+    <div class="tabs">
+      <div class="tab active" data-filter="ALL" onclick="setTxFilter('ALL')">Semua</div>
+      <div class="tab" data-filter="PEMASUKAN" onclick="setTxFilter('PEMASUKAN')">Masuk</div>
+      <div class="tab" data-filter="PENGELUARAN" onclick="setTxFilter('PENGELUARAN')">Keluar</div>
+      <div class="tab" data-filter="TRANSFER" onclick="setTxFilter('TRANSFER')">Transfer</div>
+    </div>
+    <div id="historyList" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="settingsView" class="hidden">
+    <h1 style="font-size:1.5rem;">Pengaturan</h1>
+    <div class="card">
+      <div style="font-weight:700;">Akun</div>
+      <p class="label" id="userEmailLabel" style="margin-top:6px;"></p>
+    </div>
+    <div class="card">
+      <div style="font-weight:700; margin-bottom:6px;">Export Data</div>
+      <button class="btn-secondary" onclick="exportCSV()">Download CSV</button>
+    </div>
+    <div class="card">
+      <button class="btn-secondary" style="color:var(--danger); border-color:var(--danger);" onclick="logout()">Keluar Akun</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav id="bottomNav" class="hidden">
+  <div class="item active" data-v="homeView" onclick="showView('homeView')">🏠<span>Beranda</span></div>
+  <div class="item" data-v="pocketsView" onclick="showView('pocketsView')">👛<span>Kantong</span></div>
+  <div class="fab" onclick="openTxModal()">+</div>
+  <div class="item" data-v="historyView" onclick="showView('historyView')">🕓<span>Riwayat</span></div>
+  <div class="item" data-v="settingsView" onclick="showView('settingsView')">⚙️<span>Sistem</span></div>
+</nav>
+
+<!-- MODAL: TAMBAH MUTASI -->
+<div id="txModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 style="margin:0;">Tambah Mutasi</h2>
+      <button class="close-btn" onclick="closeModal('txModal')">✕</button>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-type="PENGELUARAN" onclick="setTxType('PENGELUARAN')">Pengeluaran</div>
+      <div class="tab" data-type="PEMASUKAN" onclick="setTxType('PEMASUKAN')">Pemasukan</div>
+      <div class="tab" data-type="TRANSFER" onclick="setTxType('TRANSFER')">Transfer</div>
+    </div>
+    <label class="field-label">Jumlah (Rp)</label>
+    <input type="number" id="txAmount" placeholder="0" />
+
+    <div id="txSinglePocketWrap">
+      <label class="field-label">Pilih Kantong</label>
+      <select id="txPocket"></select>
+    </div>
+
+    <div id="txTransferWrap" class="hidden">
+      <label class="field-label">Dari Kantong</label>
+      <select id="txFromPocket"></select>
+      <label class="field-label">Ke Kantong</label>
+      <select id="txToPocket"></select>
+    </div>
+
+    <label class="field-label">Kategori (opsional)</label>
+    <input type="text" id="txCategory" placeholder="Contoh: Bensin, Keluarga" />
+    <label class="field-label">Catatan</label>
+    <input type="text" id="txNote" placeholder="Contoh: Beli makan siang" />
+    <button class="btn-primary" onclick="submitTransaction()">Kirim Mutasi</button>
+    <p class="error-msg" id="txError"></p>
+  </div>
+</div>
+
+<!-- MODAL: TAMBAH KANTONG -->
+<div id="pocketModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 style="margin:0;">Tambah Kantong</h2>
+      <button class="close-btn" onclick="closeModal('pocketModal')">✕</button>
+    </div>
+    <label class="field-label">Nama Kantong</label>
+    <input type="text" id="pocketName" placeholder="Contoh: Bensin" />
+    <label class="field-label">Tipe</label>
+    <select id="pocketType">
+      <option value="BAYAR">BAYAR (untuk pengeluaran rutin)</option>
+      <option value="TABUNG">TABUNG (untuk simpanan)</option>
+    </select>
+    <label class="field-label">Saldo Awal (Rp)</label>
+    <input type="number" id="pocketInitialBalance" placeholder="0" />
+    <button class="btn-primary" onclick="submitPocket()">Buat Kantong</button>
+    <p class="error-msg" id="pocketError"></p>
+  </div>
+</div>
+
+<script>
+/* =======================================================
+   KONFIGURASI SUPABASE — GANTI DENGAN PUNYA KAMU
+   ======================================================= */
+const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let pockets = [];
+let transactions = [];
+let isRegisterMode = false;
+let txType = "PENGELUARAN";
+let txFilter = "ALL";
+
+const rupiah = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
+
+/* ---------------- AUTH ---------------- */
+function toggleAuthMode(){
+  isRegisterMode = !isRegisterMode;
+  document.getElementById('authTitle').textContent = isRegisterMode ? "Buat akun baru" : "Masuk ke akun kamu";
+  document.getElementById('authSubmitBtn').textContent = isRegisterMode ? "Daftar" : "Masuk";
+  document.getElementById('authToggleBtn').textContent = isRegisterMode ? "Sudah punya akun? Masuk" : "Belum punya akun? Daftar";
+}
+
+async function handleAuthSubmit(){
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errEl = document.getElementById('authError');
+  errEl.textContent = "";
+  if(!email || !password){ errEl.textContent = "Email dan password wajib diisi."; return; }
+
+  let result;
+  if(isRegisterMode){
+    result = await sb.auth.signUp({ email, password });
+  } else {
+    result = await sb.auth.signInWithPassword({ email, password });
+  }
+  if(result.error){ errEl.textContent = result.error.message; return; }
+
+  if(isRegisterMode && result.data.user && !result.data.session){
+    errEl.style.color = "var(--green)";
+    errEl.textContent = "Cek email kamu untuk verifikasi, lalu login.";
+    return;
+  }
+  await onLoggedIn(result.data.session.user);
+}
+
+async function logout(){
+  await sb.auth.signOut();
+  location.reload();
+}
+
+async function onLoggedIn(user){
+  currentUser = user;
+  document.getElementById('authView').classList.add('hidden');
+  document.getElementById('appView').classList.remove('hidden');
+  document.getElementById('bottomNav').classList.remove('hidden');
+  document.getElementById('greeting').textContent = "Halo, " + user.email.split('@')[0] + "!";
+  document.getElementById('userEmailLabel').textContent = user.email;
+  await loadData();
+}
+
+/* ---------------- NAVIGATION ---------------- */
+function showView(id){
+  ['homeView','pocketsView','historyView','settingsView'].forEach(v=>{
+    document.getElementById(v).classList.toggle('hidden', v!==id);
+  });
+  document.querySelectorAll('#bottomNav .item').forEach(el=>{
+    el.classList.toggle('active', el.dataset.v===id);
+  });
+  if(id==='historyView') renderHistory();
+}
+
+function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+
+/* ---------------- LOAD DATA ---------------- */
+async function loadData(){
+  const { data: pocketData, error: pErr } = await sb.from('pockets').select('*').order('created_at');
+  if(!pErr) pockets = pocketData || [];
+
+  const { data: txData, error: tErr } = await sb.from('transactions')
+    .select('*').order('created_at', { ascending:false });
+  if(!tErr) transactions = txData || [];
+
+  renderAll();
+}
+
+function renderAll(){
+  renderTotals();
+  renderPockets();
+  renderRecentTx();
+  renderHistory();
+  fillPocketSelects();
+}
+
+function renderTotals(){
+  const total = pockets.reduce((s,p)=>s+Number(p.balance),0);
+  const income = transactions.filter(t=>t.type==='PEMASUKAN').reduce((s,t)=>s+Number(t.amount),0);
+  const expense = transactions.filter(t=>t.type==='PENGELUARAN').reduce((s,t)=>s+Number(t.amount),0);
+  document.getElementById('totalBalance').textContent = rupiah(total);
+  document.getElementById('totalIncome').textContent = rupiah(income);
+  document.getElementById('totalExpense').textContent = rupiah(expense);
+}
+
+function pocketCardHTML(p, withDelete){
+  return `
+  <div class="pocket">
+    <span class="badge">${p.type}</span>
+    <div class="pocket-name">${p.name}</div>
+    <div class="pocket-code">${p.code}</div>
+    <div class="sisa">Sisa Saldo</div>
+    <div class="pocket-balance">${rupiah(p.balance)}</div>
+    ${withDelete ? `<button class="close-btn" style="position:absolute; top:16px; right:16px;" onclick="deletePocket('${p.id}')">🗑</button>` : ''}
+  </div>`;
+}
+
+function renderPockets(){
+  document.getElementById('pocketsPreview').innerHTML =
+    pockets.slice(0,4).map(p=>pocketCardHTML(p,false)).join('') || `<div class="empty">Belum ada kantong</div>`;
+  document.getElementById('pocketsFull').innerHTML =
+    pockets.map(p=>pocketCardHTML(p,true)).join('') || `<div class="empty">Belum ada kantong</div>`;
+}
+
+function txIconAndSign(t){
+  if(t.type==='PEMASUKAN') return {icon:'↓', cls:'in', sign:'+', amtCls:'pos'};
+  if(t.type==='PENGELUARAN') return {icon:'↑', cls:'out', sign:'-', amtCls:'neg'};
+  return {icon:'⇄', cls:'out', sign:'', amtCls:'neg'};
+}
+
+function txRowHTML(t){
+  const pocket = pockets.find(p=>p.id===t.pocket_id);
+  const {icon,cls,sign,amtCls} = txIconAndSign(t);
+  const dateStr = new Date(t.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'short'});
+  return `
+  <div class="tx">
+    <div class="icon ${cls}">${icon}</div>
+    <div class="tx-info">
+      <div class="tx-title">${t.note || t.category || t.type}</div>
+      <div class="tx-sub">${t.category || ''} • ${dateStr}${pocket ? ' • '+pocket.name : ''}</div>
+    </div>
+    <div class="tx-amount ${amtCls}">${sign} ${rupiah(t.amount)}</div>
+  </div>`;
+}
+
+function renderRecentTx(){
+  document.getElementById('txPreview').innerHTML =
+    transactions.slice(0,4).map(txRowHTML).join('') || `<div class="empty">Belum ada mutasi</div>`;
+}
+
+function setTxFilter(f){
+  txFilter = f;
+  document.querySelectorAll('#historyView .tab').forEach(t=>t.classList.toggle('active', t.dataset.filter===f));
+  renderHistory();
+}
+
+function renderHistory(){
+  const q = (document.getElementById('searchTx')?.value || '').toLowerCase();
+  let list = transactions;
+  if(txFilter!=='ALL') list = list.filter(t=>t.type===txFilter);
+  if(q) list = list.filter(t => (t.note||'').toLowerCase().includes(q) || (t.category||'').toLowerCase().includes(q));
+  document.getElementById('historyList').innerHTML =
+    list.map(txRowHTML).join('') || `<div class="empty">Tidak ada transaksi</div>`;
+}
+
+function fillPocketSelects(){
+  const opts = pockets.map(p=>`<option value="${p.id}">${p.name} (${rupiah(p.balance)})</option>`).join('');
+  document.getElementById('txPocket').innerHTML = opts;
+  document.getElementById('txFromPocket').innerHTML = opts;
+  document.getElementById('txToPocket').innerHTML = opts;
+}
+
+/* ---------------- POCKET CRUD ---------------- */
+function openPocketModal(){
+  document.getElementById('pocketError').textContent = '';
+  document.getElementById('pocketName').value = '';
+  document.getElementById('pocketInitialBalance').value = '';
+  document.getElementById('pocketModal').classList.remove('hidden');
+}
+
+async function submitPocket(){
+  const name = document.getElementById('pocketName').value.trim();
+  const type = document.getElementById('pocketType').value;
+  const initial = Number(document.getElementById('pocketInitialBalance').value || 0);
+  const errEl = document.getElementById('pocketError');
+  if(!name){ errEl.textContent = "Nama kantong wajib diisi."; return; }
+
+  const code = 'PKT-' + Math.floor(100000 + Math.random()*899999);
+  const { error } = await sb.from('pockets').insert({
+    user_id: currentUser.id, name, code, type, balance: initial
+  });
+  if(error){ errEl.textContent = error.message; return; }
+  closeModal('pocketModal');
+  await loadData();
+}
+
+async function deletePocket(id){
+  if(!confirm('Hapus kantong ini? Semua mutasi terkait juga akan terhapus.')) return;
+  await sb.from('pockets').delete().eq('id', id);
+  await loadData();
+}
+
+/* ---------------- TRANSACTION CRUD ---------------- */
+function openTxModal(){
+  document.getElementById('txError').textContent = '';
+  document.getElementById('txAmount').value = '';
+  document.getElementById('txCategory').value = '';
+  document.getElementById('txNote').value = '';
+  setTxType('PENGELUARAN');
+  document.getElementById('txModal').classList.remove('hidden');
+}
+
+function setTxType(type){
+  txType = type;
+  document.querySelectorAll('#txModal .tab').forEach(t=>t.classList.toggle('active', t.dataset.type===type));
+  document.getElementById('txSinglePocketWrap').classList.toggle('hidden', type==='TRANSFER');
+  document.getElementById('txTransferWrap').classList.toggle('hidden', type!=='TRANSFER');
+}
+
+async function submitTransaction(){
+  const amount = Number(document.getElementById('txAmount').value || 0);
+  const category = document.getElementById('txCategory').value.trim();
+  const note = document.getElementById('txNote').value.trim();
+  const errEl = document.getElementById('txError');
+  errEl.textContent = '';
+
+  if(amount <= 0){ errEl.textContent = "Jumlah harus lebih dari 0."; return; }
+  if(pockets.length === 0){ errEl.textContent = "Buat kantong dulu sebelum mencatat mutasi."; return; }
+
+  if(txType === 'TRANSFER'){
+    const fromId = document.getElementById('txFromPocket').value;
+    const toId = document.getElementById('txToPocket').value;
+    if(fromId === toId){ errEl.textContent = "Kantong asal dan tujuan tidak boleh sama."; return; }
+    const fromPocket = pockets.find(p=>p.id===fromId);
+    if(Number(fromPocket.balance) < amount){ errEl.textContent = "Saldo kantong asal tidak cukup."; return; }
+
+    await sb.from('transactions').insert({
+      user_id: currentUser.id, pocket_id: fromId, related_pocket_id: toId,
+      type: 'TRANSFER', amount, category, note
+    });
+    await sb.from('pockets').update({ balance: Number(fromPocket.balance) - amount }).eq('id', fromId);
+    const toPocket = pockets.find(p=>p.id===toId);
+    await sb.from('pockets').update({ balance: Number(toPocket.balance) + amount }).eq('id', toId);
+
+  } else {
+    const pocketId = document.getElementById('txPocket').value;
+    const pocket = pockets.find(p=>p.id===pocketId);
+    if(txType === 'PENGELUARAN' && Number(pocket.balance) < amount){
+      errEl.textContent = "Saldo kantong tidak cukup."; return;
+    }
+    await sb.from('transactions').insert({
+      user_id: currentUser.id, pocket_id: pocketId,
+      type: txType, amount, category, note
+    });
+    const newBalance = txType === 'PEMASUKAN'
+      ? Number(pocket.balance) + amount
+      : Number(pocket.balance) - amount;
+    await sb.from('pockets').update({ balance: newBalance }).eq('id', pocketId);
+  }
+
+  closeModal('txModal');
+  await loadData();
+}
+
+/* ---------------- EXPORT ---------------- */
+function exportCSV(){
+  let csv = "Tanggal,Tipe,Kategori,Catatan,Jumlah,Kantong\n";
+  transactions.forEach(t=>{
+    const pocket = pockets.find(p=>p.id===t.pocket_id);
+    csv += `${new Date(t.created_at).toLocaleDateString('id-ID')},${t.type},${t.category||''},${t.note||''},${t.amount},${pocket?pocket.name:''}\n`;
+  });
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'riwayat-mutasi.csv'; a.click();
+}
+
+/* ---------------- INIT ---------------- */
+(async function init(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(session && session.user){
+    await onLoggedIn(session.user);
+  }
+})();
+</script>
+</body>
+</html>
