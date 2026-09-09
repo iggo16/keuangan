@@ -74,24 +74,6 @@
   .tabs{display:flex; gap:8px; margin-top:10px;}
   .tab{flex:1; text-align:center; padding:12px; border-radius:9999px; background:var(--card2); border:1px solid var(--border); cursor:pointer; font-weight:600; font-size:0.82rem; color:var(--muted);}
   .tab.active{background:var(--accent); color:#fff; border-color:var(--accent);}
-  .filter-section{margin-top:22px;}
-.filter-section:first-of-type{margin-top:4px;}
-.filter-section-title{font-weight:700; font-size:0.92rem; margin-bottom:10px; color:var(--text);}
-.filter-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:8px;}
-.filter-chip{
-  text-align:center; padding:11px 8px; border-radius:9999px; background:var(--card2);
-  border:1px solid var(--border); cursor:pointer; font-weight:600; font-size:0.82rem;
-  color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:background .15s,border-color .15s,color .15s;
-}
-.filter-chip.active{background:var(--accent); color:#fff; border-color:var(--accent);}
-.filter-date-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-.filter-date-row input{margin-top:0;}
-.filter-actions{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:26px;}
-.filter-actions button{margin-top:0;}
-
-@media (min-width:480px){
-  .filter-grid[data-cols="4"]{grid-template-columns:repeat(4,1fr);}
-}
   .modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:flex-end; justify-content:center; z-index:50;}
   .modal{background:#000; border:1px solid var(--border); width:100%; max-width:520px; border-radius:22px 22px 0 0; padding:22px; max-height:90vh; overflow-y:auto;}
   .modal-head{display:flex; justify-content:space-between; align-items:center;}
@@ -104,13 +86,6 @@
   .link-btn{background:none; border:none; color:var(--accent); cursor:pointer; padding:0; margin-top:10px; font-size:0.85rem; font-weight:600;}
   .error-msg{color:var(--danger); font-size:0.85rem; margin-top:8px;}
   .empty{color:var(--muted); text-align:center; padding:30px 0; font-size:0.9rem;}
-  .filter-row{display:flex; gap:10px;}
-  .filter-btn{width:48px; height:48px; flex:0 0 48px; border-radius:14px; position:relative; margin-top:6px;}
-  .filter-badge{position:absolute; top:6px; right:6px; width:8px; height:8px; border-radius:50%; background:var(--accent);}
-  .filter-section-title{margin-top:20px; font-weight:700; color:var(--text); font-size:0.95rem; display:block;}
-  .filter-date-range{display:flex; gap:10px;}
-  .filter-actions{display:flex; gap:10px; margin-top:22px;}
-  .filter-actions button{margin-top:0;}
 
   /* ---- desktop shell ---- */
   .app-shell{display:block;}
@@ -125,6 +100,32 @@
   .mini-row{display:flex; justify-content:space-between; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.88rem;}
   .mini-row:last-child{border-bottom:none;}
   .mini-row-amt{color:var(--muted); font-weight:600; white-space:nowrap;}
+
+  /* ---- filter (riwayat) ---- */
+  .history-search-row{display:flex; gap:10px; align-items:flex-start;}
+  .history-search-row input{flex:1; margin-top:0;}
+  .filter-btn{width:48px; height:48px; flex:0 0 48px; border-radius:14px; position:relative; margin-top:0;}
+  #filterBadge{position:absolute; top:5px; right:5px; width:8px; height:8px; border-radius:50%; background:var(--accent); border:2px solid var(--bg);}
+  .filter-section{margin-top:22px;}
+  .filter-section:first-of-type{margin-top:4px;}
+  .filter-section-title{font-weight:700; font-size:0.92rem; margin-bottom:10px; color:var(--text);}
+  .filter-section-title.muted{font-weight:500; color:var(--muted);}
+  .filter-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:8px;}
+  .filter-chip{
+    text-align:center; padding:11px 8px; border-radius:9999px; background:var(--card2);
+    border:1px solid var(--border); cursor:pointer; font-weight:600; font-size:0.82rem;
+    color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    transition:background .15s,border-color .15s,color .15s;
+  }
+  .filter-chip.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+  .filter-date-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .filter-date-row input{margin-top:0;}
+  .filter-actions{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:26px;}
+  .filter-actions button{margin-top:0;}
+
+  @media (min-width:420px){
+    .filter-grid[data-cols="4"]{grid-template-columns:repeat(4,1fr);}
+  }
 
   @media (min-width:768px){
     .modal-overlay{align-items:center;}
@@ -144,7 +145,6 @@
 </head>
 <body>
 
-<!-- ===================== LOGIN / REGISTER ===================== -->
 <div id="authView" class="container auth-box">
   <h1>Keuangan Ranting</h1>
   <p class="label" id="authTitle">Masuk ke akun kamu</p>
@@ -157,11 +157,9 @@
   <p class="error-msg" id="authError"></p>
 </div>
 
-<!-- ===================== APP ===================== -->
 <div id="appView" class="hidden">
 <div class="app-shell">
 
-  <!-- SIDE NAV (desktop) -->
   <nav id="sideNav" class="side-nav">
     <div class="side-logo">Keuangan Ranting</div>
     <div class="side-item active" data-v="homeView" onclick="showView('homeView')"><span class="side-icon" data-icon="home"></span><span>Beranda</span></div>
@@ -174,7 +172,6 @@
   <main class="main-col">
   <div class="container">
 
-  <!-- HOME -->
   <div id="homeView">
     <p class="brand-label">Keuangan Ranting</p>
     <h1 id="greeting">Semangat!</h1>
@@ -213,7 +210,6 @@
     <div id="txPreview"></div>
   </div>
 
-  <!-- POCKETS (KANTONG) -->
   <div id="pocketsView" class="hidden">
     <div class="section-head" style="margin-top:0;">
       <h1 style="margin:0; font-size:1.4rem;">Semua kantong</h1>
@@ -222,19 +218,17 @@
     <div class="grid2" id="pocketsFull"></div>
   </div>
 
-  <!-- HISTORY -->
   <div id="historyView" class="hidden">
     <h1 style="font-size:1.4rem;">Riwayat mutasi</h1>
-    <div class="filter-row">
-      <input type="text" id="searchTx" placeholder="Cari transaksi..." oninput="renderHistory()" style="flex:1;" />
+    <div class="history-search-row">
+      <input type="text" id="searchTx" placeholder="Cari transaksi..." oninput="renderHistory()" />
       <button class="close-btn filter-btn" onclick="openFilterModal()" title="Filter" data-icon="filter">
-        <span id="filterBadge" class="filter-badge hidden"></span>
+        <span id="filterBadge" class="hidden"></span>
       </button>
     </div>
     <div id="historyList" style="margin-top:14px;"></div>
   </div>
 
-  <!-- SETTINGS -->
   <div id="settingsView" class="hidden">
     <h1 style="font-size:1.4rem;">Pengaturan</h1>
     <div class="card">
@@ -255,7 +249,6 @@
   </div>
   </main>
 
-  <!-- RIGHT COLUMN (desktop) -->
   <aside class="right-col">
     <div class="card">
       <div class="widget-title">Ringkasan kantong</div>
@@ -270,7 +263,6 @@
 </div>
 </div>
 
-<!-- BOTTOM NAV (mobile) -->
 <nav id="bottomNav" class="hidden">
   <div class="item active" data-v="homeView" onclick="showView('homeView')"><span data-icon="home"></span><span>Beranda</span></div>
   <div class="item" data-v="pocketsView" onclick="showView('pocketsView')"><span data-icon="wallet"></span><span>Kantong</span></div>
@@ -279,7 +271,6 @@
 </nav>
 <div id="fabBtn" class="fab hidden" onclick="openTxModal()" data-icon="plus"></div>
 
-<!-- MODAL: TAMBAH / EDIT MUTASI -->
 <div id="txModal" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-head">
@@ -315,7 +306,6 @@
   </div>
 </div>
 
-<!-- MODAL: TAMBAH / EDIT KANTONG -->
 <div id="pocketModal" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-head">
@@ -336,7 +326,6 @@
   </div>
 </div>
 
-<!-- MODAL: FILTER RIWAYAT -->
 <div id="filterModal" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-head">
@@ -366,7 +355,7 @@
     </div>
 
     <div class="filter-section">
-      <div class="filter-section-title" style="font-weight:500; color:var(--muted);">Pilih tanggal</div>
+      <div class="filter-section-title muted">Pilih tanggal</div>
       <div class="filter-date-row">
         <input type="date" id="filterDateFrom" onchange="setFilterDate('CUSTOM')" />
         <input type="date" id="filterDateTo" onchange="setFilterDate('CUSTOM')" />
@@ -379,9 +368,8 @@
     </div>
   </div>
 </div>
-/* =======================================================
-   KONFIGURASI SUPABASE
-   ======================================================= */
+
+<script>
 const SUPABASE_URL = "https://ogmiecjmxnfcgjxjkrkt.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_VEtowyIjRdeeQzmrJ4B2DQ_D8zzVhPF";
 
@@ -395,13 +383,8 @@ let txType = "PENGELUARAN";
 let editingPocketId = null;
 let editingTxId = null;
 
-/* filter riwayat */
-let filterType = "ALL";
-let filterDate = "ALL";
-
 const rupiah = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
 
-/* ---------------- SIMPLE MINIMALIST LINE ICONS ---------------- */
 function svgIcon(path, size, strokeWidth){
   size = size || 20;
   strokeWidth = strokeWidth || 2;
@@ -419,7 +402,7 @@ const ICONS = {
   edit: svgIcon('<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>', 15, 1.6),
   plus: svgIcon('<path d="M12 5v14"/><path d="M5 12h14"/>', 24),
   close: svgIcon('<path d="M6 6l12 12"/><path d="M18 6 6 18"/>', 16),
-  filter: svgIcon('<path d="M4 6h16"/><path d="M7 12h10"/><path d="M10 18h4"/>', 18, 2)
+  filter: svgIcon('<path d="M4 6h16"/><path d="M7 12h10"/><path d="M10 18h4"/>', 18)
 };
 
 function paintIcons(root){
@@ -432,7 +415,6 @@ function paintIcons(root){
   });
 }
 
-/* ---------------- AUTH ---------------- */
 function toggleAuthMode(){
   isRegisterMode = !isRegisterMode;
   document.getElementById('authTitle').textContent = isRegisterMode ? "Buat akun baru" : "Masuk ke akun kamu";
@@ -479,7 +461,6 @@ async function onLoggedIn(user){
   await loadData();
 }
 
-/* ---------------- NAVIGATION ---------------- */
 function showView(id){
   ['homeView','pocketsView','historyView','settingsView'].forEach(v=>{
     document.getElementById(v).classList.toggle('hidden', v!==id);
@@ -495,7 +476,6 @@ function showView(id){
 
 function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
 
-/* ---------------- LOAD DATA ---------------- */
 async function loadData(){
   const { data: pocketData, error: pErr } = await sb.from('pockets').select('*').order('created_at');
   if(!pErr) pockets = pocketData || [];
@@ -578,21 +558,23 @@ function renderRecentTx(){
     transactions.slice(0,4).map(txRowHTML).join('') || `<div class="empty">Belum ada mutasi</div>`;
 }
 
-/* ---------------- FILTER RIWAYAT ---------------- */
+let filterType = "ALL";
+let filterDate = "ALL";
+
 function openFilterModal(){
-  document.querySelectorAll('#filterTypeTabs .tab').forEach(t=>t.classList.toggle('active', t.dataset.value===filterType));
-  document.querySelectorAll('#filterDateTabs .tab').forEach(t=>t.classList.toggle('active', t.dataset.value===filterDate));
+  document.querySelectorAll('#filterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===filterType));
+  document.querySelectorAll('#filterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===filterDate));
   document.getElementById('filterModal').classList.remove('hidden');
 }
 
 function setFilterType(val){
   filterType = val;
-  document.querySelectorAll('#filterTypeTabs .tab').forEach(t=>t.classList.toggle('active', t.dataset.value===val));
+  document.querySelectorAll('#filterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===val));
 }
 
 function setFilterDate(val){
   filterDate = val;
-  document.querySelectorAll('#filterDateTabs .tab').forEach(t=>t.classList.toggle('active', t.dataset.value===val));
+  document.querySelectorAll('#filterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===val));
 }
 
 function clearFilter(){
@@ -600,8 +582,8 @@ function clearFilter(){
   filterDate = "ALL";
   document.getElementById('filterDateFrom').value = '';
   document.getElementById('filterDateTo').value = '';
-  document.querySelectorAll('#filterTypeTabs .tab').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
-  document.querySelectorAll('#filterDateTabs .tab').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
+  document.querySelectorAll('#filterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
+  document.querySelectorAll('#filterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
   updateFilterBadge();
   closeModal('filterModal');
   renderHistory();
@@ -692,7 +674,6 @@ function fillPocketSelects(){
   document.getElementById('txToPocket').innerHTML = opts;
 }
 
-/* ---------------- POCKET CRUD ---------------- */
 function openPocketModal(id){
   editingPocketId = id || null;
   document.getElementById('pocketError').textContent = '';
@@ -745,7 +726,6 @@ async function deletePocket(id){
   await loadData();
 }
 
-/* ---------------- TRANSACTION CRUD ---------------- */
 function openTxModal(id){
   editingTxId = id || null;
   document.getElementById('txError').textContent = '';
@@ -783,7 +763,6 @@ function setTxType(type){
   document.getElementById('txTransferWrap').classList.toggle('hidden', type!=='TRANSFER');
 }
 
-/* Undo the balance effect of an existing transaction (used before edit/delete) */
 async function reverseTransactionEffect(t) {
   const { data: currentPockets } = await sb.from('pockets').select('*');
   const list = currentPockets || pockets;
@@ -810,7 +789,6 @@ async function reverseTransactionEffect(t) {
   }
 }
 
-/* Apply transaction effect to pocket balance */
 async function applyTransactionEffect(type, amount, pocketId, relatedPocketId) {
   const { data: currentPockets } = await sb.from('pockets').select('*');
   const list = currentPockets || pockets;
@@ -924,7 +902,6 @@ async function deleteTransaction(id) {
   }
 }
 
-/* ---------------- EXPORT DATA ---------------- */
 function exportCSV() {
   if (!transactions.length) return alert('Tidak ada data transaksi.');
   let csv = 'Tanggal,Tipe,Kategori,Catatan,Jumlah\n';
@@ -986,7 +963,6 @@ function exportPDF() {
   }
 }
 
-/* ---------------- INITIALIZATION ---------------- */
 sb.auth.getSession().then(({ data: { session } }) => {
   if (session) onLoggedIn(session.user);
 });
