@@ -101,7 +101,7 @@
   .mini-row:last-child{border-bottom:none;}
   .mini-row-amt{color:var(--muted); font-weight:600; white-space:nowrap;}
 
-  /* ---- filter (riwayat) ---- */
+  /* ---- filter (riwayat & export) ---- */
   .history-search-row{display:flex; gap:10px; align-items:flex-start;}
   .history-search-row input{flex:1; margin-top:0;}
   .filter-btn{width:48px; height:48px; flex:0 0 48px; border-radius:14px; position:relative; margin-top:0;}
@@ -122,6 +122,7 @@
   .filter-date-row input{margin-top:0;}
   .filter-actions{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:26px;}
   .filter-actions button{margin-top:0;}
+  .export-filter-count{color:var(--muted); font-size:0.78rem; margin-top:10px;}
 
   @media (min-width:420px){
     .filter-grid[data-cols="4"]{grid-template-columns:repeat(4,1fr);}
@@ -236,8 +237,46 @@
       <p class="label" id="userEmailLabel" style="margin-top:6px;"></p>
     </div>
     <div class="card">
-      <div style="font-weight:700; margin-bottom:10px;">Export data</div>
-      <button class="btn-secondary" onclick="exportCSV()">Unduh CSV</button>
+      <div style="font-weight:700; margin-bottom:4px;">Export data</div>
+      <p class="label" style="margin-top:0;">Pilih filter, lalu unduh data yang sesuai.</p>
+
+      <div class="filter-section" style="margin-top:16px;">
+        <div class="filter-section-title">Tipe</div>
+        <div class="filter-grid" data-cols="4" id="exportFilterTypeTabs">
+          <div class="filter-chip active" data-value="ALL" onclick="setExportFilterType('ALL')">Semua</div>
+          <div class="filter-chip" data-value="PEMASUKAN" onclick="setExportFilterType('PEMASUKAN')">Masuk</div>
+          <div class="filter-chip" data-value="PENGELUARAN" onclick="setExportFilterType('PENGELUARAN')">Keluar</div>
+          <div class="filter-chip" data-value="TRANSFER" onclick="setExportFilterType('TRANSFER')">Transfer</div>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-section-title">Tanggal</div>
+        <div class="filter-grid" id="exportFilterDateTabs">
+          <div class="filter-chip active" data-value="ALL" onclick="setExportFilterDate('ALL')">Semua</div>
+          <div class="filter-chip" data-value="TODAY" onclick="setExportFilterDate('TODAY')">Hari ini</div>
+          <div class="filter-chip" data-value="WEEK" onclick="setExportFilterDate('WEEK')">Seminggu ini</div>
+          <div class="filter-chip" data-value="MONTH" onclick="setExportFilterDate('MONTH')">Bulan ini</div>
+          <div class="filter-chip" data-value="LAST_MONTH" onclick="setExportFilterDate('LAST_MONTH')">1 bulan lalu</div>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-section-title muted">Pilih tanggal</div>
+        <div class="filter-date-row">
+          <input type="date" id="exportDateFrom" onchange="setExportFilterDate('CUSTOM')" />
+          <input type="date" id="exportDateTo" onchange="setExportFilterDate('CUSTOM')" />
+        </div>
+      </div>
+
+      <p class="export-filter-count" id="exportFilterCount"></p>
+
+      <div class="filter-actions" style="margin-top:14px;">
+        <button class="btn-secondary" onclick="clearExportFilter()">Hapus filter</button>
+        <button class="btn-secondary" onclick="updateExportFilterCount()">Terapkan</button>
+      </div>
+
+      <button class="btn-secondary" style="margin-top:16px;" onclick="exportCSV()">Unduh CSV</button>
       <button class="btn-secondary" style="margin-top:10px;" onclick="exportExcel()">Unduh Excel</button>
       <button class="btn-secondary" style="margin-top:10px;" onclick="exportPDF()">Unduh PDF</button>
     </div>
@@ -472,6 +511,7 @@ function showView(id){
     el.classList.toggle('active', el.dataset.v===id);
   });
   if(id==='historyView') renderHistory();
+  if(id==='settingsView') updateExportFilterCount();
 }
 
 function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
@@ -494,6 +534,7 @@ function renderAll(){
   renderHistory();
   renderRightPanel();
   fillPocketSelects();
+  updateExportFilterCount();
   paintIcons();
 }
 
@@ -558,6 +599,49 @@ function renderRecentTx(){
     transactions.slice(0,4).map(txRowHTML).join('') || `<div class="empty">Belum ada mutasi</div>`;
 }
 
+/* ---- filter logic (dipakai bareng oleh Riwayat & Export) ---- */
+function isInDateRange(dateVal, filterVal, fromVal, toVal){
+  if(filterVal === 'ALL') return true;
+  const d = new Date(dateVal);
+  const now = new Date();
+
+  if(filterVal === 'TODAY'){
+    return d.toDateString() === now.toDateString();
+  }
+  if(filterVal === 'WEEK'){
+    const start = new Date(now);
+    start.setDate(now.getDate() - now.getDay());
+    start.setHours(0,0,0,0);
+    return d >= start;
+  }
+  if(filterVal === 'MONTH'){
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }
+  if(filterVal === 'LAST_MONTH'){
+    const start = new Date(now);
+    start.setMonth(now.getMonth() - 1);
+    return d >= start && d <= now;
+  }
+  if(filterVal === 'CUSTOM'){
+    if(fromVal && d < new Date(fromVal)) return false;
+    if(toVal){
+      const toEnd = new Date(toVal);
+      toEnd.setHours(23,59,59,999);
+      if(d > toEnd) return false;
+    }
+    return true;
+  }
+  return true;
+}
+
+function filterTransactions(list, typeVal, dateVal, fromVal, toVal){
+  let out = list;
+  if(typeVal !== 'ALL') out = out.filter(t => t.type === typeVal);
+  out = out.filter(t => isInDateRange(t.created_at, dateVal, fromVal, toVal));
+  return out;
+}
+
+/* ---- filter Riwayat ---- */
 let filterType = "ALL";
 let filterDate = "ALL";
 
@@ -600,50 +684,53 @@ function updateFilterBadge(){
   document.getElementById('filterBadge').classList.toggle('hidden', !active);
 }
 
-function matchesDateFilter(t){
-  if(filterDate === 'ALL') return true;
-  const d = new Date(t.created_at);
-  const now = new Date();
-
-  if(filterDate === 'TODAY'){
-    return d.toDateString() === now.toDateString();
-  }
-  if(filterDate === 'WEEK'){
-    const start = new Date(now);
-    start.setDate(now.getDate() - now.getDay());
-    start.setHours(0,0,0,0);
-    return d >= start;
-  }
-  if(filterDate === 'MONTH'){
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  }
-  if(filterDate === 'LAST_MONTH'){
-    const start = new Date(now);
-    start.setMonth(now.getMonth() - 1);
-    return d >= start && d <= now;
-  }
-  if(filterDate === 'CUSTOM'){
-    const fromVal = document.getElementById('filterDateFrom').value;
-    const toVal = document.getElementById('filterDateTo').value;
-    if(fromVal && d < new Date(fromVal)) return false;
-    if(toVal){
-      const toEnd = new Date(toVal);
-      toEnd.setHours(23,59,59,999);
-      if(d > toEnd) return false;
-    }
-    return true;
-  }
-  return true;
-}
-
 function renderHistory(){
   const q = (document.getElementById('searchTx')?.value || '').toLowerCase();
-  let list = transactions;
-  if(filterType!=='ALL') list = list.filter(t=>t.type===filterType);
-  list = list.filter(matchesDateFilter);
+  const fromVal = document.getElementById('filterDateFrom')?.value;
+  const toVal = document.getElementById('filterDateTo')?.value;
+  let list = filterTransactions(transactions, filterType, filterDate, fromVal, toVal);
   if(q) list = list.filter(t => (t.note||'').toLowerCase().includes(q) || (t.category||'').toLowerCase().includes(q));
   document.getElementById('historyList').innerHTML =
     list.map(txRowHTML).join('') || `<div class="empty">Tidak ada transaksi</div>`;
+}
+
+/* ---- filter Export ---- */
+let exportFilterType = "ALL";
+let exportFilterDate = "ALL";
+
+function setExportFilterType(val){
+  exportFilterType = val;
+  document.querySelectorAll('#exportFilterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===val));
+  updateExportFilterCount();
+}
+
+function setExportFilterDate(val){
+  exportFilterDate = val;
+  document.querySelectorAll('#exportFilterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===val));
+  updateExportFilterCount();
+}
+
+function clearExportFilter(){
+  exportFilterType = "ALL";
+  exportFilterDate = "ALL";
+  document.getElementById('exportDateFrom').value = '';
+  document.getElementById('exportDateTo').value = '';
+  document.querySelectorAll('#exportFilterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
+  document.querySelectorAll('#exportFilterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
+  updateExportFilterCount();
+}
+
+function getExportTransactions(){
+  const fromVal = document.getElementById('exportDateFrom')?.value;
+  const toVal = document.getElementById('exportDateTo')?.value;
+  return filterTransactions(transactions, exportFilterType, exportFilterDate, fromVal, toVal);
+}
+
+function updateExportFilterCount(){
+  const el = document.getElementById('exportFilterCount');
+  if(!el) return;
+  const n = getExportTransactions().length;
+  el.textContent = n + ' dari ' + transactions.length + ' mutasi sesuai filter ini.';
 }
 
 function renderRightPanel(){
@@ -903,9 +990,10 @@ async function deleteTransaction(id) {
 }
 
 function exportCSV() {
-  if (!transactions.length) return alert('Tidak ada data transaksi.');
+  const list = getExportTransactions();
+  if (!list.length) return alert('Tidak ada data transaksi untuk filter ini.');
   let csv = 'Tanggal,Tipe,Kategori,Catatan,Jumlah\n';
-  transactions.forEach(t => {
+  list.forEach(t => {
     const date = new Date(t.created_at).toISOString().split('T')[0];
     csv += `"${date}","${t.type}","${t.category || ''}","${t.note || ''}",${t.amount}\n`;
   });
@@ -917,8 +1005,9 @@ function exportCSV() {
 }
 
 function exportExcel() {
-  if (!transactions.length) return alert('Tidak ada data transaksi.');
-  const data = transactions.map(t => ({
+  const list = getExportTransactions();
+  if (!list.length) return alert('Tidak ada data transaksi untuk filter ini.');
+  const data = list.map(t => ({
     Tanggal: new Date(t.created_at).toLocaleDateString('id-ID'),
     Tipe: t.type,
     Kategori: t.category || '-',
@@ -932,13 +1021,14 @@ function exportExcel() {
 }
 
 function exportPDF() {
-  if (!transactions.length) return alert('Tidak ada data transaksi.');
+  const list = getExportTransactions();
+  if (!list.length) return alert('Tidak ada data transaksi untuk filter ini.');
   try {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     doc.text("Laporan Mutasi Keuangan Ranting", 14, 15);
 
-    const tableData = transactions.map(t => [
+    const tableData = list.map(t => [
       new Date(t.created_at).toLocaleDateString('id-ID'),
       t.type,
       t.category || '-',
