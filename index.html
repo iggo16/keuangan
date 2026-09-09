@@ -812,25 +812,34 @@ function exportExcel() {
 
 function exportPDF() {
   if (!transactions.length) return alert('Tidak ada data transaksi.');
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.text("Laporan Mutasi Keuangan Ranting", 14, 15);
-  
-  const tableData = transactions.map(t => [
-    new Date(t.created_at).toLocaleDateString('id-ID'),
-    t.type,
-    t.category || '-',
-    t.note || '-',
-    rupiah(t.amount)
-  ]);
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.text("Laporan Mutasi Keuangan Ranting", 14, 15);
 
-  doc.autoTable({
-    head: [['Tanggal', 'Tipe', 'Kategori', 'Catatan', 'Jumlah']],
-    body: tableData,
-    startY: 20
-  });
+    const tableData = transactions.map(t => [
+      new Date(t.created_at).toLocaleDateString('id-ID'),
+      t.type,
+      t.category || '-',
+      t.note || '-',
+      rupiah(t.amount)
+    ]);
 
-  doc.save(`mutasi_keuangan_${new Date().toISOString().split('T')[0]}.pdf`);
+    if (typeof doc.autoTable !== 'function') {
+      throw new Error('Plugin autoTable belum termuat.');
+    }
+
+    doc.autoTable({
+      head: [['Tanggal', 'Tipe', 'Kategori', 'Catatan', 'Jumlah']],
+      body: tableData,
+      startY: 20
+    });
+
+    doc.save(`mutasi_keuangan_${new Date().toISOString().split('T')[0]}.pdf`);
+  } catch (err) {
+    console.error(err);
+    alert('Gagal membuat PDF: ' + err.message);
+  }
 }
 
 /* ---------------- INITIALIZATION ---------------- */
