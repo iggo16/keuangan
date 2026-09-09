@@ -17,6 +17,64 @@ let editingTxId = null;
 
 const rupiah = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
 
+/* ---------------- ANIMASI: angka berjalan (count-up) ---------------- */
+function animateNumber(el, target){
+  if(!el) return;
+  const prev = Number(el.dataset.rawValue || 0);
+  target = Number(target || 0);
+  el.dataset.rawValue = target;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    el.textContent = rupiah(target);
+    return;
+  }
+  const duration = 700;
+  const startTime = performance.now();
+  function step(now){
+    const p = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    const val = Math.round(prev + (target - prev) * eased);
+    el.textContent = rupiah(val);
+    if(p < 1) requestAnimationFrame(step);
+    else el.textContent = rupiah(target);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ---------------- ANIMASI: top loading bar saat memuat data ---------------- */
+function showLoadingBar(){
+  const bar = document.getElementById('loadingBar');
+  if(!bar) return;
+  bar.classList.remove('hidden');
+  bar.style.width = '18%';
+  clearTimeout(bar._t);
+  bar._t = setTimeout(() => { bar.style.width = '68%'; }, 160);
+}
+function hideLoadingBar(){
+  const bar = document.getElementById('loadingBar');
+  if(!bar) return;
+  bar.style.width = '100%';
+  clearTimeout(bar._t);
+  setTimeout(() => bar.classList.add('hidden'), 260);
+  setTimeout(() => { bar.style.width = '0%'; }, 560);
+}
+
+/* ---------------- ANIMASI: efek ripple pada tombol ---------------- */
+function setupRippleEffect(){
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-primary, .btn-secondary, .close-btn, .fab, .tab');
+    if(!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple-effect';
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+    ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+    btn.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove());
+  });
+}
+
 /* ---------------- SIMPLE MINIMALIST LINE ICONS ---------------- */
 function svgIcon(path, size, strokeWidth){
   size = size || 20;
@@ -94,7 +152,14 @@ async function onLoggedIn(user){
 /* ---------------- NAVIGATION ---------------- */
 function showView(id){
   ['homeView','pocketsView','historyView','settingsView'].forEach(v=>{
-    document.getElementById(v).classList.toggle('hidden', v!==id);
+    const el = document.getElementById(v);
+    const isActive = v===id;
+    el.classList.toggle('hidden', !isActive);
+    if(isActive){
+      el.classList.remove('view-fade');
+      void el.offsetWidth; /* restart animasi transisi */
+      el.classList.add('view-fade');
+    }
   });
   document.querySelectorAll('#bottomNav .item').forEach(el=>{
     el.classList.toggle('active', el.dataset.v===id);
@@ -109,6 +174,8 @@ function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
 
 /* ---------------- LOAD DATA ---------------- */
 async function loadData(){
+  showLoadingBar();
+
   const { data: pocketData, error: pErr } = await sb.from('pockets').select('*').order('created_at');
   if(!pErr) pockets = pocketData || [];
 
@@ -117,6 +184,7 @@ async function loadData(){
   if(!tErr) transactions = txData || [];
 
   renderAll();
+  hideLoadingBar();
 }
 
 function renderAll(){
@@ -133,9 +201,9 @@ function renderTotals(){
   const total = pockets.reduce((s,p)=>s+Number(p.balance),0);
   const income = transactions.filter(t=>t.type==='PEMASUKAN').reduce((s,t)=>s+Number(t.amount),0);
   const expense = transactions.filter(t=>t.type==='PENGELUARAN').reduce((s,t)=>s+Number(t.amount),0);
-  document.getElementById('totalBalance').textContent = rupiah(total);
-  document.getElementById('totalIncome').textContent = rupiah(income);
-  document.getElementById('totalExpense').textContent = rupiah(expense);
+  animateNumber(document.getElementById('totalBalance'), total);
+  animateNumber(document.getElementById('totalIncome'), income);
+  animateNumber(document.getElementById('totalExpense'), expense);
 }
 
 function pocketCardHTML(p, withActions){
@@ -529,4 +597,5 @@ sb.auth.onAuthStateChange((_, session) => {
 
 window.addEventListener('DOMContentLoaded', () => {
   paintIcons();
+  setupRippleEffect();
 });
