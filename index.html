@@ -86,6 +86,8 @@
   .tab{flex:1; text-align:center; padding:12px; border-radius:9999px; background:var(--card2); border:1px solid var(--border); cursor:pointer; font-weight:600; font-size:0.82rem; color:var(--muted); transition:background-color .18s ease, color .18s ease, border-color .18s ease, transform .1s ease;}
   .tab:active{transform:scale(0.96);}
   .tab.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+  #appView{transition:filter .28s ease;}
+  #appView.blurred{filter:blur(4px);}
   .modal-overlay{
     position:fixed; inset:0; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; z-index:50;
     opacity:0; pointer-events:none; transition:opacity .28s ease, background-color .28s ease;
@@ -318,7 +320,7 @@
 </nav>
 <div id="fabBtn" class="fab hidden" onclick="openTxModal()" data-icon="plus"></div>
 
-<div id="txModal" class="modal-overlay hidden">
+<div id="txModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModal('txModal')">
   <div class="modal">
     <div class="modal-head">
       <h2 style="margin:0;" id="txModalTitle">Tambah mutasi</h2>
@@ -353,7 +355,7 @@
   </div>
 </div>
 
-<div id="pocketModal" class="modal-overlay hidden">
+<div id="pocketModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModal('pocketModal')">
   <div class="modal">
     <div class="modal-head">
       <h2 style="margin:0;" id="pocketModalTitle">Tambah kantong</h2>
@@ -373,7 +375,7 @@
   </div>
 </div>
 
-<div id="filterModal" class="modal-overlay hidden">
+<div id="filterModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModal('filterModal')">
   <div class="modal">
     <div class="modal-head">
       <h2 style="margin:0;">Filter Aktivitas</h2>
@@ -416,7 +418,7 @@
   </div>
 </div>
 
-<div id="exportFilterModal" class="modal-overlay hidden">
+<div id="exportFilterModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModal('exportFilterModal')">
   <div class="modal">
     <div class="modal-head">
       <h2 style="margin:0;">Filter Export</h2>
@@ -459,7 +461,7 @@
   </div>
 </div>
 
-<div id="balanceDetailModal" class="modal-overlay hidden">
+<div id="balanceDetailModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModal('balanceDetailModal')">
   <div class="modal">
     <div class="modal-head">
       <h2 style="margin:0;">Rincian saldo</h2>
@@ -469,7 +471,7 @@
   </div>
 </div>
 
-<div id="pocketDetailModal" class="modal-overlay hidden">
+<div id="pocketDetailModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModal('pocketDetailModal')">
   <div class="modal">
     <div class="modal-head">
       <h2 style="margin:0;" id="pocketDetailTitle">Detail kantong</h2>
@@ -479,7 +481,7 @@
   </div>
 </div>
 
-<div id="txDetailModal" class="modal-overlay hidden">
+<div id="txDetailModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModal('txDetailModal')">
   <div class="modal">
     <div class="modal-head">
       <h2 style="margin:0;">Detail mutasi</h2>
@@ -598,12 +600,14 @@ function showView(id){
 function closeModal(id){
   const el = document.getElementById(id);
   el.classList.remove('show');
+  document.getElementById('appView').classList.remove('blurred');
   setTimeout(()=>{ el.classList.add('hidden'); }, 280);
 }
 
 function openModal(id){
   const el = document.getElementById(id);
   el.classList.remove('hidden');
+  document.getElementById('appView').classList.add('blurred');
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{ el.classList.add('show'); });
   });
