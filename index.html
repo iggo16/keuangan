@@ -237,46 +237,19 @@
       <p class="label" id="userEmailLabel" style="margin-top:6px;"></p>
     </div>
     <div class="card">
-      <div style="font-weight:700; margin-bottom:4px;">Export data</div>
-      <p class="label" style="margin-top:0;">Pilih filter, lalu unduh data yang sesuai.</p>
-
-      <div class="filter-section" style="margin-top:16px;">
-        <div class="filter-section-title">Tipe</div>
-        <div class="filter-grid" data-cols="4" id="exportFilterTypeTabs">
-          <div class="filter-chip active" data-value="ALL" onclick="setExportFilterType('ALL')">Semua</div>
-          <div class="filter-chip" data-value="PEMASUKAN" onclick="setExportFilterType('PEMASUKAN')">Masuk</div>
-          <div class="filter-chip" data-value="PENGELUARAN" onclick="setExportFilterType('PENGELUARAN')">Keluar</div>
-          <div class="filter-chip" data-value="TRANSFER" onclick="setExportFilterType('TRANSFER')">Transfer</div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-weight:700;">Export data</div>
+          <p class="label" style="margin-top:2px;">Pilih filter, lalu unduh data yang sesuai.</p>
         </div>
+        <button class="close-btn filter-btn" onclick="openExportFilterModal()" title="Filter" data-icon="filter">
+          <span id="exportFilterBadge" class="hidden"></span>
+        </button>
       </div>
 
-      <div class="filter-section">
-        <div class="filter-section-title">Tanggal</div>
-        <div class="filter-grid" id="exportFilterDateTabs">
-          <div class="filter-chip active" data-value="ALL" onclick="setExportFilterDate('ALL')">Semua</div>
-          <div class="filter-chip" data-value="TODAY" onclick="setExportFilterDate('TODAY')">Hari ini</div>
-          <div class="filter-chip" data-value="WEEK" onclick="setExportFilterDate('WEEK')">Seminggu ini</div>
-          <div class="filter-chip" data-value="MONTH" onclick="setExportFilterDate('MONTH')">Bulan ini</div>
-          <div class="filter-chip" data-value="LAST_MONTH" onclick="setExportFilterDate('LAST_MONTH')">1 bulan lalu</div>
-        </div>
-      </div>
+      <p class="export-filter-count" id="exportFilterCount" style="margin-top:12px;"></p>
 
-      <div class="filter-section">
-        <div class="filter-section-title muted">Pilih tanggal</div>
-        <div class="filter-date-row">
-          <input type="date" id="exportDateFrom" onchange="setExportFilterDate('CUSTOM')" />
-          <input type="date" id="exportDateTo" onchange="setExportFilterDate('CUSTOM')" />
-        </div>
-      </div>
-
-      <p class="export-filter-count" id="exportFilterCount"></p>
-
-      <div class="filter-actions" style="margin-top:14px;">
-        <button class="btn-secondary" onclick="clearExportFilter()">Hapus filter</button>
-        <button class="btn-secondary" onclick="updateExportFilterCount()">Terapkan</button>
-      </div>
-
-      <button class="btn-secondary" style="margin-top:16px;" onclick="exportCSV()">Unduh CSV</button>
+      <button class="btn-secondary" style="margin-top:12px;" onclick="exportCSV()">Unduh CSV</button>
       <button class="btn-secondary" style="margin-top:10px;" onclick="exportExcel()">Unduh Excel</button>
       <button class="btn-secondary" style="margin-top:10px;" onclick="exportPDF()">Unduh PDF</button>
     </div>
@@ -408,6 +381,49 @@
   </div>
 </div>
 
+<div id="exportFilterModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 style="margin:0;">Filter Export</h2>
+      <button class="close-btn" onclick="closeModal('exportFilterModal')" data-icon="close"></button>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-section-title">Tipe</div>
+      <div class="filter-grid" data-cols="4" id="exportFilterTypeTabs">
+        <div class="filter-chip active" data-value="ALL" onclick="setExportFilterType('ALL')">Semua</div>
+        <div class="filter-chip" data-value="PEMASUKAN" onclick="setExportFilterType('PEMASUKAN')">Masuk</div>
+        <div class="filter-chip" data-value="PENGELUARAN" onclick="setExportFilterType('PENGELUARAN')">Keluar</div>
+        <div class="filter-chip" data-value="TRANSFER" onclick="setExportFilterType('TRANSFER')">Transfer</div>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-section-title">Tanggal</div>
+      <div class="filter-grid" id="exportFilterDateTabs">
+        <div class="filter-chip active" data-value="ALL" onclick="setExportFilterDate('ALL')">Semua</div>
+        <div class="filter-chip" data-value="TODAY" onclick="setExportFilterDate('TODAY')">Hari ini</div>
+        <div class="filter-chip" data-value="WEEK" onclick="setExportFilterDate('WEEK')">Seminggu ini</div>
+        <div class="filter-chip" data-value="MONTH" onclick="setExportFilterDate('MONTH')">Bulan ini</div>
+        <div class="filter-chip" data-value="LAST_MONTH" onclick="setExportFilterDate('LAST_MONTH')">1 bulan lalu</div>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-section-title muted">Pilih tanggal</div>
+      <div class="filter-date-row">
+        <input type="date" id="exportDateFrom" onchange="setExportFilterDate('CUSTOM')" />
+        <input type="date" id="exportDateTo" onchange="setExportFilterDate('CUSTOM')" />
+      </div>
+    </div>
+
+    <div class="filter-actions">
+      <button class="btn-secondary" onclick="clearExportFilter()">Hapus</button>
+      <button class="btn-primary" onclick="applyExportFilter()">Terapkan</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://ogmiecjmxnfcgjxjkrkt.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_VEtowyIjRdeeQzmrJ4B2DQ_D8zzVhPF";
@@ -448,7 +464,7 @@ function paintIcons(root){
   (root || document).querySelectorAll('[data-icon]').forEach(el=>{
     const name = el.getAttribute('data-icon');
     if(!ICONS[name]) return;
-    const badge = el.querySelector('#filterBadge');
+    const badge = el.querySelector('#filterBadge') || el.querySelector('#exportFilterBadge');
     el.innerHTML = ICONS[name];
     if(badge) el.appendChild(badge);
   });
@@ -698,16 +714,20 @@ function renderHistory(){
 let exportFilterType = "ALL";
 let exportFilterDate = "ALL";
 
+function openExportFilterModal(){
+  document.querySelectorAll('#exportFilterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===exportFilterType));
+  document.querySelectorAll('#exportFilterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===exportFilterDate));
+  document.getElementById('exportFilterModal').classList.remove('hidden');
+}
+
 function setExportFilterType(val){
   exportFilterType = val;
   document.querySelectorAll('#exportFilterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===val));
-  updateExportFilterCount();
 }
 
 function setExportFilterDate(val){
   exportFilterDate = val;
   document.querySelectorAll('#exportFilterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===val));
-  updateExportFilterCount();
 }
 
 function clearExportFilter(){
@@ -717,7 +737,20 @@ function clearExportFilter(){
   document.getElementById('exportDateTo').value = '';
   document.querySelectorAll('#exportFilterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
   document.querySelectorAll('#exportFilterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
+  updateExportFilterBadge();
+  closeModal('exportFilterModal');
   updateExportFilterCount();
+}
+
+function applyExportFilter(){
+  updateExportFilterBadge();
+  closeModal('exportFilterModal');
+  updateExportFilterCount();
+}
+
+function updateExportFilterBadge(){
+  const active = exportFilterType !== 'ALL' || exportFilterDate !== 'ALL';
+  document.getElementById('exportFilterBadge').classList.toggle('hidden', !active);
 }
 
 function getExportTransactions(){
