@@ -10,10 +10,11 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf-autotable.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+<div id="loadingBar" class="hidden"></div>
 
 <!-- ===================== LOGIN / REGISTER ===================== -->
 <div id="authView" class="container auth-box">
@@ -75,13 +76,13 @@
       <span class="label" style="margin:0;">Kantong utama</span>
       <a onclick="showView('pocketsView')">Lihat semua</a>
     </div>
-    <div class="grid2" id="pocketsPreview"></div>
+    <div class="grid2" id="pocketsPreview"><div class="skel skel-pocket"></div><div class="skel skel-pocket"></div></div>
 
     <div class="section-head">
       <span class="label" style="margin:0;">Mutasi terbaru</span>
       <a onclick="showView('historyView')">Lihat semua</a>
     </div>
-    <div id="txPreview"></div>
+    <div id="txPreview"><div class="skel skel-tx"></div><div class="skel skel-tx"></div><div class="skel skel-tx"></div><div class="skel skel-tx"></div></div>
   </div>
 
   <!-- POCKETS (KANTONG) -->
@@ -90,7 +91,7 @@
       <h1 style="margin:0; font-size:1.4rem;">Semua kantong</h1>
       <a onclick="openPocketModal()" style="background:var(--accent); color:#fff; padding:10px 16px; border-radius:9999px; font-weight:700; font-size:0.85rem;">+ Tambah</a>
     </div>
-    <div class="grid2" id="pocketsFull"></div>
+    <div class="grid2" id="pocketsFull"><div class="skel skel-pocket"></div><div class="skel skel-pocket"></div><div class="skel skel-pocket"></div><div class="skel skel-pocket"></div></div>
   </div>
 
   <!-- HISTORY -->
@@ -103,7 +104,7 @@
       <div class="tab" data-filter="PENGELUARAN" onclick="setTxFilter('PENGELUARAN')">Keluar</div>
       <div class="tab" data-filter="TRANSFER" onclick="setTxFilter('TRANSFER')">Transfer</div>
     </div>
-    <div id="historyList" style="margin-top:14px;"></div>
+    <div id="historyList" style="margin-top:14px;"><div class="skel skel-tx"></div><div class="skel skel-tx"></div><div class="skel skel-tx"></div><div class="skel skel-tx"></div></div>
   </div>
 
   <!-- SETTINGS -->
