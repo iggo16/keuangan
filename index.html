@@ -495,7 +495,6 @@ function txRowHTML(t){
     </div>
     <div class="tx-amount ${amtCls}">${sign} ${rupiah(t.amount)}</div>
     <div class="tx-actions">
-      <button class="close-btn sm" onclick="openTxModal('${t.id}')" title="Edit mutasi">${ICONS.edit}</button>
       <button class="close-btn sm danger" onclick="deleteTransaction('${t.id}')" title="Hapus mutasi">${ICONS.trash}</button>
     </div>
   </div>`;
