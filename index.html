@@ -26,17 +26,20 @@
   .brand-label{color:var(--muted); font-size:0.85rem; margin:0 0 2px; font-weight:500;}
   .label{color:var(--muted); font-size:0.82rem; font-weight:500;}
   .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:16px;}
-  .balance-card{background:var(--card);}
+  .balance-card{background:var(--card); cursor:pointer; transition:border-color .15s;}
+  .balance-card:hover{border-color:var(--accent);}
   .balance-amount{font-size:2.1rem; font-weight:800; margin:8px 0 18px; letter-spacing:-0.01em;}
   .row{display:flex; gap:12px;}
-  .mini-card{flex:1; min-width:0; background:var(--card2); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; gap:10px;}
+  .mini-card{flex:1; min-width:0; background:var(--card2); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; gap:10px; cursor:pointer; transition:border-color .15s;}
+  .mini-card:hover{border-color:var(--accent);}
   .mini-card .info{min-width:0;}
   .mini-card .icon{width:32px; height:32px; flex:0 0 32px; border-radius:50%; display:flex; align-items:center; justify-content:center;}
   .icon.in{background:#04261d; color:var(--green);}
   .icon.out{background:#2d0e12; color:var(--red);}
   .mini-card .value{font-size:0.98rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:6px;}
-  .pocket{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; position:relative;}
+  .pocket{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; position:relative; cursor:pointer; transition:border-color .15s;}
+  .pocket:hover{border-color:var(--accent);}
   .pocket-actions{position:absolute; top:14px; right:14px; display:flex; gap:6px;}
   .badge{display:inline-block; background:transparent; border:1px solid var(--accent); color:var(--accent); font-weight:700; font-size:0.7rem; padding:4px 12px; border-radius:9999px;}
   .pocket-name{font-size:1.1rem; font-weight:700; margin:10px 0 2px; padding-right:60px;}
@@ -45,7 +48,8 @@
   .pocket .sisa{color:var(--muted); font-size:0.75rem;}
   .section-head{display:flex; justify-content:space-between; align-items:center; margin:22px 0 10px;}
   .section-head a{color:var(--accent); font-size:0.85rem; text-decoration:none; cursor:pointer; font-weight:600;}
-  .tx{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .tx{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; align-items:center; gap:10px; margin-bottom:10px; cursor:pointer; transition:border-color .15s;}
+  .tx:hover{border-color:var(--accent);}
   .tx .icon{width:36px; height:36px; flex:0 0 36px; border-radius:50%; display:flex; align-items:center; justify-content:center;}
   .tx-info{flex:1; min-width:0;}
   .tx-title{font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -177,18 +181,18 @@
     <p class="brand-label">Keuangan Ranting</p>
     <h1 id="greeting">Semangat!</h1>
 
-    <div class="card balance-card">
+    <div class="card balance-card" onclick="openBalanceDetail()">
       <p class="label">Total saldo tergabung</p>
       <div class="balance-amount" id="totalBalance">Rp 0</div>
       <div class="row">
-        <div class="mini-card">
+        <div class="mini-card" onclick="event.stopPropagation(); openHistoryFiltered('PEMASUKAN')">
           <div class="icon in" data-icon="arrowDown"></div>
           <div class="info">
             <div class="label">Pemasukan</div>
             <div class="value" style="color:var(--green);" id="totalIncome">Rp 0</div>
           </div>
         </div>
-        <div class="mini-card">
+        <div class="mini-card" onclick="event.stopPropagation(); openHistoryFiltered('PENGELUARAN')">
           <div class="icon out" data-icon="arrowUp"></div>
           <div class="info">
             <div class="label">Pengeluaran</div>
@@ -424,6 +428,36 @@
   </div>
 </div>
 
+<div id="balanceDetailModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 style="margin:0;">Rincian saldo</h2>
+      <button class="close-btn" onclick="closeModal('balanceDetailModal')" data-icon="close"></button>
+    </div>
+    <div id="balanceDetailBody"></div>
+  </div>
+</div>
+
+<div id="pocketDetailModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 style="margin:0;" id="pocketDetailTitle">Detail kantong</h2>
+      <button class="close-btn" onclick="closeModal('pocketDetailModal')" data-icon="close"></button>
+    </div>
+    <div id="pocketDetailBody"></div>
+  </div>
+</div>
+
+<div id="txDetailModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 style="margin:0;">Detail mutasi</h2>
+      <button class="close-btn" onclick="closeModal('txDetailModal')" data-icon="close"></button>
+    </div>
+    <div id="txDetailBody"></div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://ogmiecjmxnfcgjxjkrkt.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_VEtowyIjRdeeQzmrJ4B2DQ_D8zzVhPF";
@@ -565,12 +599,12 @@ function renderTotals(){
 
 function pocketCardHTML(p, withActions){
   return `
-  <div class="pocket">
+  <div class="pocket" onclick="openPocketDetail('${p.id}')">
     <span class="badge">${p.type}</span>
     ${withActions ? `
     <div class="pocket-actions">
-      <button class="close-btn sm" onclick="openPocketModal('${p.id}')" title="Edit kantong">${ICONS.edit}</button>
-      <button class="close-btn sm danger" onclick="deletePocket('${p.id}')" title="Hapus kantong">${ICONS.trash}</button>
+      <button class="close-btn sm" onclick="event.stopPropagation(); openPocketModal('${p.id}')" title="Edit kantong">${ICONS.edit}</button>
+      <button class="close-btn sm danger" onclick="event.stopPropagation(); deletePocket('${p.id}')" title="Hapus kantong">${ICONS.trash}</button>
     </div>` : ''}
     <div class="pocket-name">${p.name}</div>
     <div class="pocket-code">${p.code}</div>
@@ -597,7 +631,7 @@ function txRowHTML(t){
   const {icon,cls,sign,amtCls} = txIconAndSign(t);
   const dateStr = new Date(t.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'short'});
   return `
-  <div class="tx">
+  <div class="tx" onclick="openTxDetail('${t.id}')">
     <div class="icon ${cls}">${icon}</div>
     <div class="tx-info">
       <div class="tx-title">${t.note || t.category || t.type}</div>
@@ -605,9 +639,100 @@ function txRowHTML(t){
     </div>
     <div class="tx-amount ${amtCls}">${sign} ${rupiah(t.amount)}</div>
     <div class="tx-actions">
-      <button class="close-btn sm danger" onclick="deleteTransaction('${t.id}')" title="Hapus mutasi">${ICONS.trash}</button>
+      <button class="close-btn sm danger" onclick="event.stopPropagation(); deleteTransaction('${t.id}')" title="Hapus mutasi">${ICONS.trash}</button>
     </div>
   </div>`;
+}
+
+function openHistoryFiltered(type){
+  filterType = type;
+  filterDate = 'ALL';
+  const fromEl = document.getElementById('filterDateFrom');
+  const toEl = document.getElementById('filterDateTo');
+  if(fromEl) fromEl.value = '';
+  if(toEl) toEl.value = '';
+  updateFilterBadge();
+  showView('historyView');
+}
+
+function openBalanceDetail(){
+  const total = pockets.reduce((s,p)=>s+Number(p.balance),0);
+  document.getElementById('balanceDetailBody').innerHTML = `
+    <div class="card" style="margin-top:4px;">
+      <p class="label">Total saldo tergabung</p>
+      <div class="balance-amount" style="margin:6px 0 0;">${rupiah(total)}</div>
+    </div>
+    <div class="card">
+      ${pockets.map(p=>`
+        <div class="mini-row" style="cursor:pointer;" onclick="closeModal('balanceDetailModal'); openPocketDetail('${p.id}')">
+          <span>${p.name} <span class="label">(${p.type})</span></span>
+          <span class="mini-row-amt">${rupiah(p.balance)}</span>
+        </div>
+      `).join('') || `<div class="empty">Belum ada kantong</div>`}
+    </div>
+  `;
+  document.getElementById('balanceDetailModal').classList.remove('hidden');
+}
+
+function openPocketDetail(id){
+  const p = pockets.find(x=>x.id===id);
+  if(!p) return;
+  const relatedTx = transactions.filter(t=>t.pocket_id===id || t.related_pocket_id===id);
+  document.getElementById('pocketDetailTitle').textContent = p.name;
+  document.getElementById('pocketDetailBody').innerHTML = `
+    <div class="card" style="margin-top:4px;">
+      <span class="badge">${p.type}</span>
+      <div class="pocket-code" style="margin-top:10px;">${p.code}</div>
+      <div class="sisa" style="margin-top:14px;">Sisa saldo</div>
+      <div class="pocket-balance" style="font-size:1.4rem;">${rupiah(p.balance)}</div>
+    </div>
+    <div class="filter-actions" style="margin-top:2px;">
+      <button class="btn-secondary" onclick="closeModal('pocketDetailModal'); openPocketModal('${p.id}')">Edit</button>
+      <button class="btn-secondary" style="color:var(--danger); border-color:var(--danger);" onclick="closeModal('pocketDetailModal'); deletePocket('${p.id}')">Hapus</button>
+    </div>
+    <div class="section-head" style="margin-top:22px;">
+      <span class="label" style="margin:0;">Mutasi kantong ini</span>
+    </div>
+    ${relatedTx.length ? relatedTx.map(txRowHTML).join('') : `<div class="empty">Belum ada mutasi</div>`}
+  `;
+  document.getElementById('pocketDetailModal').classList.remove('hidden');
+  paintIcons(document.getElementById('pocketDetailModal'));
+}
+
+function openTxDetail(id){
+  const t = transactions.find(x=>x.id===id);
+  if(!t) return;
+  const pocket = pockets.find(p=>p.id===t.pocket_id);
+  const relatedPocket = pockets.find(p=>p.id===t.related_pocket_id);
+  const {icon,cls,sign,amtCls} = txIconAndSign(t);
+  const dateStr = new Date(t.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+  const timeStr = new Date(t.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  const typeLabel = t.type==='PEMASUKAN' ? 'Pemasukan' : t.type==='PENGELUARAN' ? 'Pengeluaran' : 'Transfer';
+
+  document.getElementById('txDetailBody').innerHTML = `
+    <div class="card" style="text-align:center; margin-top:4px;">
+      <div class="icon ${cls}" style="margin:0 auto 10px;">${icon}</div>
+      <div class="tx-amount ${amtCls}" style="font-size:1.6rem;">${sign} ${rupiah(t.amount)}</div>
+      <div class="label" style="margin-top:6px;">${typeLabel}</div>
+    </div>
+    <div class="card">
+      <div class="mini-row"><span>Tanggal</span><span class="mini-row-amt">${dateStr}, ${timeStr}</span></div>
+      ${t.type==='TRANSFER' ? `
+        <div class="mini-row"><span>Dari kantong</span><span class="mini-row-amt">${relatedPocket ? '' : ''}${pocket ? pocket.name : '-'}</span></div>
+        <div class="mini-row"><span>Ke kantong</span><span class="mini-row-amt">${relatedPocket ? relatedPocket.name : '-'}</span></div>
+      ` : `
+        <div class="mini-row"><span>Kantong</span><span class="mini-row-amt">${pocket ? pocket.name : '-'}</span></div>
+      `}
+      <div class="mini-row"><span>Kategori</span><span class="mini-row-amt">${t.category || '-'}</span></div>
+      <div class="mini-row"><span>Catatan</span><span class="mini-row-amt" style="white-space:normal; text-align:right; max-width:60%;">${t.note || '-'}</span></div>
+    </div>
+    <div class="filter-actions">
+      <button class="btn-secondary" onclick="closeModal('txDetailModal'); openTxModal('${t.id}')">Edit</button>
+      <button class="btn-secondary" style="color:var(--danger); border-color:var(--danger);" onclick="closeModal('txDetailModal'); deleteTransaction('${t.id}')">Hapus</button>
+    </div>
+  `;
+  document.getElementById('txDetailModal').classList.remove('hidden');
+  paintIcons(document.getElementById('txDetailModal'));
 }
 
 function renderRecentTx(){
