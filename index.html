@@ -370,6 +370,8 @@
     </select>
     <label class="field-label" id="pocketBalanceLabel">Saldo awal (Rp)</label>
     <input type="number" id="pocketInitialBalance" placeholder="0" />
+    <label class="field-label">Catatan (opsional)</label>
+    <input type="text" id="pocketNote" placeholder="Contoh: Untuk keperluan sekolah" />
     <button class="btn-primary" id="pocketSubmitBtn" onclick="submitPocket()">Buat kantong</button>
     <p class="error-msg" id="pocketError"></p>
   </div>
@@ -732,6 +734,7 @@ function openPocketDetail(id){
       <div class="pocket-code" style="margin-top:10px;">${p.code}</div>
       <div class="sisa" style="margin-top:14px;">Sisa saldo</div>
       <div class="pocket-balance" style="font-size:1.4rem;">${rupiah(p.balance)}</div>
+      ${p.note ? `<div class="label" style="margin-top:8px;">${p.note}</div>` : ''}
     </div>
     <div class="filter-actions" style="margin-top:2px;">
       <button class="btn-secondary" onclick="closeModal('pocketDetailModal'); openPocketModal('${p.id}')">Edit</button>
@@ -976,16 +979,18 @@ function openPocketModal(id){
     if(!p){ editingPocketId = null; return; }
     document.getElementById('pocketName').value = p.name;
     document.getElementById('pocketType').value = p.type;
+    document.getElementById('pocketNote').value = p.note || '';
     balanceInput.value = p.balance;
-    balanceInput.disabled = true;                     // 🔒 kunci saat edit
+    balanceInput.disabled = true;
     document.getElementById('pocketModalTitle').textContent = 'Edit kantong';
     document.getElementById('pocketBalanceLabel').textContent = 'Saldo saat ini (Rp) — tidak bisa diubah di sini';
     document.getElementById('pocketSubmitBtn').textContent = 'Simpan perubahan';
   } else {
     document.getElementById('pocketName').value = '';
     document.getElementById('pocketType').value = 'BAYAR';
+    document.getElementById('pocketNote').value = '';
     balanceInput.value = '';
-    balanceInput.disabled = false;                     // ✅ bebas isi saat buat baru
+    balanceInput.disabled = false;
     document.getElementById('pocketModalTitle').textContent = 'Tambah kantong';
     document.getElementById('pocketBalanceLabel').textContent = 'Saldo awal (Rp)';
     document.getElementById('pocketSubmitBtn').textContent = 'Buat kantong';
@@ -996,20 +1001,20 @@ function openPocketModal(id){
 async function submitPocket(){
   const name = document.getElementById('pocketName').value.trim();
   const type = document.getElementById('pocketType').value;
+  const note = document.getElementById('pocketNote').value.trim();
   const errEl = document.getElementById('pocketError');
   if(!name){ errEl.textContent = "Nama kantong wajib diisi."; return; }
 
   if(editingPocketId){
-    const existing = pockets.find(p => p.id === editingPocketId);
     const { error } = await sb.from('pockets')
-      .update({ name, type })                          // ⛔ balance TIDAK diikutkan
+      .update({ name, type, note })
       .eq('id', editingPocketId);
     if(error){ errEl.textContent = error.message; return; }
   } else {
     const balanceVal = Number(document.getElementById('pocketInitialBalance').value || 0);
     const code = 'PKT-' + Math.floor(100000 + Math.random()*899999);
     const { error } = await sb.from('pockets').insert({
-      user_id: currentUser.id, name, code, type, balance: balanceVal
+      user_id: currentUser.id, name, code, type, balance: balanceVal, note
     });
     if(error){ errEl.textContent = error.message; return; }
   }
