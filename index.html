@@ -969,19 +969,23 @@ function openPocketModal(id){
   editingPocketId = id || null;
   document.getElementById('pocketError').textContent = '';
 
+  const balanceInput = document.getElementById('pocketInitialBalance');
+
   if(editingPocketId){
     const p = pockets.find(x=>x.id===editingPocketId);
     if(!p){ editingPocketId = null; return; }
     document.getElementById('pocketName').value = p.name;
     document.getElementById('pocketType').value = p.type;
-    document.getElementById('pocketInitialBalance').value = p.balance;
+    balanceInput.value = p.balance;
+    balanceInput.disabled = true;                     // 🔒 kunci saat edit
     document.getElementById('pocketModalTitle').textContent = 'Edit kantong';
-    document.getElementById('pocketBalanceLabel').textContent = 'Saldo saat ini (Rp)';
+    document.getElementById('pocketBalanceLabel').textContent = 'Saldo saat ini (Rp) — tidak bisa diubah di sini';
     document.getElementById('pocketSubmitBtn').textContent = 'Simpan perubahan';
   } else {
     document.getElementById('pocketName').value = '';
     document.getElementById('pocketType').value = 'BAYAR';
-    document.getElementById('pocketInitialBalance').value = '';
+    balanceInput.value = '';
+    balanceInput.disabled = false;                     // ✅ bebas isi saat buat baru
     document.getElementById('pocketModalTitle').textContent = 'Tambah kantong';
     document.getElementById('pocketBalanceLabel').textContent = 'Saldo awal (Rp)';
     document.getElementById('pocketSubmitBtn').textContent = 'Buat kantong';
@@ -992,14 +996,17 @@ function openPocketModal(id){
 async function submitPocket(){
   const name = document.getElementById('pocketName').value.trim();
   const type = document.getElementById('pocketType').value;
-  const balanceVal = Number(document.getElementById('pocketInitialBalance').value || 0);
   const errEl = document.getElementById('pocketError');
   if(!name){ errEl.textContent = "Nama kantong wajib diisi."; return; }
 
   if(editingPocketId){
-    const { error } = await sb.from('pockets').update({ name, type, balance: balanceVal }).eq('id', editingPocketId);
+    const existing = pockets.find(p => p.id === editingPocketId);
+    const { error } = await sb.from('pockets')
+      .update({ name, type })                          // ⛔ balance TIDAK diikutkan
+      .eq('id', editingPocketId);
     if(error){ errEl.textContent = error.message; return; }
   } else {
+    const balanceVal = Number(document.getElementById('pocketInitialBalance').value || 0);
     const code = 'PKT-' + Math.floor(100000 + Math.random()*899999);
     const { error } = await sb.from('pockets').insert({
       user_id: currentUser.id, name, code, type, balance: balanceVal
