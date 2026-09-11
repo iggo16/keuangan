@@ -415,9 +415,9 @@
 
     <div class="filter-section">
       <div class="filter-section-title">Kantong</div>
-      <div class="filter-grid" id="filterPocketTabs">
-        <div class="filter-chip active" data-value="ALL" onclick="setFilterPocket('ALL')">Semua</div>
-      </div>
+      <select id="filterPocketSelect" onchange="setFilterPocket(this.value)">
+        <option value="ALL">Semua kantong</option>
+      </select>
     </div>
 
     <div class="filter-actions">
@@ -463,12 +463,12 @@
       </div>
     </div>
 
-<div class="filter-section">
-  <div class="filter-section-title">Kantong</div>
-  <select id="exportFilterPocketSelect" onchange="setExportFilterPocket(this.value)">
-    <option value="ALL">Semua kantong</option>
-  </select>
-</div>
+    <div class="filter-section">
+      <div class="filter-section-title">Kantong</div>
+      <select id="exportFilterPocketSelect" onchange="setExportFilterPocket(this.value)">
+        <option value="ALL">Semua kantong</option>
+      </select>
+    </div>
 
     <div class="filter-actions">
       <button class="btn-secondary" onclick="clearExportFilter()">Hapus</button>
@@ -857,7 +857,7 @@ let filterDate = "ALL";
 let filterPocket = "ALL";
 
 function openFilterModal(){
-  document.getElementById('filterPocketTabs').innerHTML = pocketChipsHTML(filterPocket, 'setFilterPocket');
+  document.getElementById('filterPocketSelect').innerHTML = pocketOptionsHTML(filterPocket);
   document.querySelectorAll('#filterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===filterType));
   document.querySelectorAll('#filterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===filterDate));
   openModal('filterModal');
@@ -918,7 +918,7 @@ let exportFilterDate = "ALL";
 let exportFilterPocket = "ALL";
 
 function openExportFilterModal(){
-  document.getElementById('exportFilterPocketTabs').innerHTML = (exportFilterPocket, 'setExportFilterPocket');
+  document.getElementById('exportFilterPocketSelect').innerHTML = pocketOptionsHTML(exportFilterPocket);
   document.querySelectorAll('#exportFilterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===exportFilterType));
   document.querySelectorAll('#exportFilterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===exportFilterDate));
   openModal('exportFilterModal');
@@ -936,7 +936,6 @@ function setExportFilterDate(val){
 
 function setExportFilterPocket(val){
   exportFilterPocket = val;
-  document.querySelectorAll('#exportFilterPocketTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===val));
 }
 
 function clearExportFilter(){
@@ -947,7 +946,7 @@ function clearExportFilter(){
   document.getElementById('exportDateTo').value = '';
   document.querySelectorAll('#exportFilterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
   document.querySelectorAll('#exportFilterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
-  document.querySelectorAll('#exportFilterPocketTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
+  document.getElementById('exportFilterPocketSelect').value = 'ALL';
   updateExportFilterBadge();
   closeModal('exportFilterModal');
   updateExportFilterCount();
