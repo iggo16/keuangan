@@ -413,6 +413,13 @@
       </div>
     </div>
 
+    <div class="filter-section">
+      <div class="filter-section-title">Kantong</div>
+      <div class="filter-grid" id="filterPocketTabs">
+        <div class="filter-chip active" data-value="ALL" onclick="setFilterPocket('ALL')">Semua</div>
+      </div>
+    </div>
+
     <div class="filter-actions">
       <button class="btn-secondary" onclick="clearFilter()">Hapus</button>
       <button class="btn-primary" onclick="applyFilter()">Terapkan</button>
@@ -453,6 +460,13 @@
       <div class="filter-date-row">
         <input type="date" id="exportDateFrom" onchange="setExportFilterDate('CUSTOM')" />
         <input type="date" id="exportDateTo" onchange="setExportFilterDate('CUSTOM')" />
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-section-title">Kantong</div>
+      <div class="filter-grid" id="exportFilterPocketTabs">
+        <div class="filter-chip active" data-value="ALL" onclick="setExportFilterPocket('ALL')">Semua</div>
       </div>
     </div>
 
@@ -824,18 +838,27 @@ function isInDateRange(dateVal, filterVal, fromVal, toVal){
   return true;
 }
 
-function filterTransactions(list, typeVal, dateVal, fromVal, toVal){
+function filterTransactions(list, typeVal, dateVal, fromVal, toVal, pocketVal){
   let out = list;
   if(typeVal !== 'ALL') out = out.filter(t => t.type === typeVal);
   out = out.filter(t => isInDateRange(t.created_at, dateVal, fromVal, toVal));
+  if(pocketVal && pocketVal !== 'ALL') out = out.filter(t => t.pocket_id === pocketVal || t.related_pocket_id === pocketVal);
   return out;
+}
+
+function pocketChipsHTML(activeVal, setterName){
+  const chips = `<div class="filter-chip${activeVal==='ALL'?' active':''}" data-value="ALL" onclick="${setterName}('ALL')">Semua</div>` +
+    pockets.map(p => `<div class="filter-chip${activeVal===p.id?' active':''}" data-value="${p.id}" onclick="${setterName}('${p.id}')">${p.name}</div>`).join('');
+  return chips;
 }
 
 /* ---- filter Riwayat ---- */
 let filterType = "ALL";
 let filterDate = "ALL";
+let filterPocket = "ALL";
 
 function openFilterModal(){
+  document.getElementById('filterPocketTabs').innerHTML = pocketChipsHTML(filterPocket, 'setFilterPocket');
   document.querySelectorAll('#filterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===filterType));
   document.querySelectorAll('#filterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===filterDate));
   openModal('filterModal');
@@ -851,13 +874,20 @@ function setFilterDate(val){
   document.querySelectorAll('#filterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===val));
 }
 
+function setFilterPocket(val){
+  filterPocket = val;
+  document.querySelectorAll('#filterPocketTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===val));
+}
+
 function clearFilter(){
   filterType = "ALL";
   filterDate = "ALL";
+  filterPocket = "ALL";
   document.getElementById('filterDateFrom').value = '';
   document.getElementById('filterDateTo').value = '';
   document.querySelectorAll('#filterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
   document.querySelectorAll('#filterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
+  document.querySelectorAll('#filterPocketTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
   updateFilterBadge();
   closeModal('filterModal');
   renderHistory();
@@ -870,7 +900,7 @@ function applyFilter(){
 }
 
 function updateFilterBadge(){
-  const active = filterType !== 'ALL' || filterDate !== 'ALL';
+  const active = filterType !== 'ALL' || filterDate !== 'ALL' || filterPocket !== 'ALL';
   document.getElementById('filterBadge').classList.toggle('hidden', !active);
 }
 
@@ -878,7 +908,7 @@ function renderHistory(){
   const q = (document.getElementById('searchTx')?.value || '').toLowerCase();
   const fromVal = document.getElementById('filterDateFrom')?.value;
   const toVal = document.getElementById('filterDateTo')?.value;
-  let list = filterTransactions(transactions, filterType, filterDate, fromVal, toVal);
+  let list = filterTransactions(transactions, filterType, filterDate, fromVal, toVal, filterPocket);
   if(q) list = list.filter(t => (t.note||'').toLowerCase().includes(q) || (t.category||'').toLowerCase().includes(q));
   document.getElementById('historyList').innerHTML =
     list.map(txRowHTML).join('') || `<div class="empty">Tidak ada transaksi</div>`;
@@ -887,8 +917,10 @@ function renderHistory(){
 /* ---- filter Export ---- */
 let exportFilterType = "ALL";
 let exportFilterDate = "ALL";
+let exportFilterPocket = "ALL";
 
 function openExportFilterModal(){
+  document.getElementById('exportFilterPocketTabs').innerHTML = pocketChipsHTML(exportFilterPocket, 'setExportFilterPocket');
   document.querySelectorAll('#exportFilterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===exportFilterType));
   document.querySelectorAll('#exportFilterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===exportFilterDate));
   openModal('exportFilterModal');
@@ -904,13 +936,20 @@ function setExportFilterDate(val){
   document.querySelectorAll('#exportFilterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===val));
 }
 
+function setExportFilterPocket(val){
+  exportFilterPocket = val;
+  document.querySelectorAll('#exportFilterPocketTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===val));
+}
+
 function clearExportFilter(){
   exportFilterType = "ALL";
   exportFilterDate = "ALL";
+  exportFilterPocket = "ALL";
   document.getElementById('exportDateFrom').value = '';
   document.getElementById('exportDateTo').value = '';
   document.querySelectorAll('#exportFilterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
   document.querySelectorAll('#exportFilterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
+  document.querySelectorAll('#exportFilterPocketTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
   updateExportFilterBadge();
   closeModal('exportFilterModal');
   updateExportFilterCount();
@@ -923,14 +962,14 @@ function applyExportFilter(){
 }
 
 function updateExportFilterBadge(){
-  const active = exportFilterType !== 'ALL' || exportFilterDate !== 'ALL';
+  const active = exportFilterType !== 'ALL' || exportFilterDate !== 'ALL' || exportFilterPocket !== 'ALL';
   document.getElementById('exportFilterBadge').classList.toggle('hidden', !active);
 }
 
 function getExportTransactions(){
   const fromVal = document.getElementById('exportDateFrom')?.value;
   const toVal = document.getElementById('exportDateTo')?.value;
-  return filterTransactions(transactions, exportFilterType, exportFilterDate, fromVal, toVal);
+  return filterTransactions(transactions, exportFilterType, exportFilterDate, fromVal, toVal, exportFilterPocket);
 }
 
 function updateExportFilterCount(){
