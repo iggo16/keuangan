@@ -463,12 +463,12 @@
       </div>
     </div>
 
-    <div class="filter-section">
-      <div class="filter-section-title">Kantong</div>
-      <div class="filter-grid" id="exportFilterPocketTabs">
-        <div class="filter-chip active" data-value="ALL" onclick="setExportFilterPocket('ALL')">Semua</div>
-      </div>
-    </div>
+<div class="filter-section">
+  <div class="filter-section-title">Kantong</div>
+  <select id="exportFilterPocketSelect" onchange="setExportFilterPocket(this.value)">
+    <option value="ALL">Semua kantong</option>
+  </select>
+</div>
 
     <div class="filter-actions">
       <button class="btn-secondary" onclick="clearExportFilter()">Hapus</button>
@@ -846,10 +846,9 @@ function filterTransactions(list, typeVal, dateVal, fromVal, toVal, pocketVal){
   return out;
 }
 
-function pocketChipsHTML(activeVal, setterName){
-  const chips = `<div class="filter-chip${activeVal==='ALL'?' active':''}" data-value="ALL" onclick="${setterName}('ALL')">Semua</div>` +
-    pockets.map(p => `<div class="filter-chip${activeVal===p.id?' active':''}" data-value="${p.id}" onclick="${setterName}('${p.id}')">${p.name}</div>`).join('');
-  return chips;
+function pocketOptionsHTML(activeVal){
+  return `<option value="ALL">Semua kantong</option>` +
+    pockets.map(p => `<option value="${p.id}"${activeVal===p.id?' selected':''}>${p.name}</option>`).join('');
 }
 
 /* ---- filter Riwayat ---- */
@@ -876,7 +875,6 @@ function setFilterDate(val){
 
 function setFilterPocket(val){
   filterPocket = val;
-  document.querySelectorAll('#filterPocketTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===val));
 }
 
 function clearFilter(){
@@ -887,7 +885,7 @@ function clearFilter(){
   document.getElementById('filterDateTo').value = '';
   document.querySelectorAll('#filterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
   document.querySelectorAll('#filterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
-  document.querySelectorAll('#filterPocketTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value==='ALL'));
+  document.getElementById('filterPocketSelect').value = 'ALL';
   updateFilterBadge();
   closeModal('filterModal');
   renderHistory();
@@ -920,7 +918,7 @@ let exportFilterDate = "ALL";
 let exportFilterPocket = "ALL";
 
 function openExportFilterModal(){
-  document.getElementById('exportFilterPocketTabs').innerHTML = pocketChipsHTML(exportFilterPocket, 'setExportFilterPocket');
+  document.getElementById('exportFilterPocketTabs').innerHTML = (exportFilterPocket, 'setExportFilterPocket');
   document.querySelectorAll('#exportFilterTypeTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===exportFilterType));
   document.querySelectorAll('#exportFilterDateTabs .filter-chip').forEach(t=>t.classList.toggle('active', t.dataset.value===exportFilterDate));
   openModal('exportFilterModal');
