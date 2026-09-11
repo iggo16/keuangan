@@ -304,7 +304,7 @@
       <div id="rightPockets"></div>
     </div>
     <div class="card">
-      <div class="widget-title">Kategori teratas</div>
+      <div class="widget-title">Deskripsi teratas</div>
       <div id="rightCategories"></div>
     </div>
   </aside>
@@ -346,7 +346,7 @@
       <select id="txToPocket"></select>
     </div>
 
-    <label class="field-label">Kategori (opsional)</label>
+    <label class="field-label">Deskripsi (opsional)</label>
     <input type="text" id="txCategory" placeholder="Contoh: Bensin, Keluarga" />
     <label class="field-label">Catatan</label>
     <input type="text" id="txNote" placeholder="Contoh: Beli makan siang" />
@@ -787,7 +787,7 @@ function openTxDetail(id){
       ` : `
         <div class="mini-row"><span>Kantong</span><span class="mini-row-amt">${pocket ? pocket.name : '-'}</span></div>
       `}
-      <div class="mini-row"><span>Kategori</span><span class="mini-row-amt">${t.category || '-'}</span></div>
+      <div class="mini-row"><span>Deskripsi</span><span class="mini-row-amt">${t.category || '-'}</span></div>
       <div class="mini-row"><span>Catatan</span><span class="mini-row-amt" style="white-space:normal; text-align:right; max-width:60%;">${t.note || '-'}</span></div>
     </div>
     <div class="filter-actions" style="grid-template-columns:1fr;">
@@ -1244,7 +1244,7 @@ async function deleteTransaction(id) {
 function exportCSV() {
   const list = getExportTransactions();
   if (!list.length) return alert('Tidak ada data transaksi untuk filter ini.');
-  let csv = 'Tanggal,Tipe,Kategori,Catatan,Jumlah\n';
+  let csv = 'Tanggal,Tipe,Deskripsi,Catatan,Jumlah\n';
   list.forEach(t => {
     const date = new Date(t.created_at).toISOString().split('T')[0];
     csv += `"${date}","${t.type}","${t.category || ''}","${t.note || ''}",${t.amount}\n`;
@@ -1262,7 +1262,7 @@ function exportExcel() {
   const data = list.map(t => ({
     Tanggal: new Date(t.created_at).toLocaleDateString('id-ID'),
     Tipe: t.type,
-    Kategori: t.category || '-',
+    Deskripsi: t.category || '-',
     Catatan: t.note || '-',
     Jumlah: t.amount
   }));
@@ -1293,7 +1293,7 @@ function exportPDF() {
     }
 
     doc.autoTable({
-      head: [['Tanggal', 'Tipe', 'Kategori', 'Catatan', 'Jumlah']],
+      head: [['Tanggal', 'Tipe', 'Deskripsi', 'Catatan', 'Jumlah']],
       body: tableData,
       startY: 20
     });
