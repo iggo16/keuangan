@@ -131,6 +131,8 @@
   .widget-title{font-weight:700; margin-bottom:8px; font-size:0.95rem;}
   .mini-row{display:flex; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); font-size:0.85rem;}
   .mini-row:last-child{border-bottom:none;}
+  .icon-btn{background:var(--card2, #1c1c1f); border:1px solid var(--border); border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--muted); cursor:pointer; padding:0;}
+  .icon-btn:hover{color:#fff; border-color:var(--muted);}
   .mini-row-amt{color:var(--muted); font-weight:600; white-space:nowrap;}
 
   /* ---- filter (riwayat & export) ---- */
@@ -362,6 +364,44 @@
   <div class="card">
     <div style="font-weight:700; margin-bottom:8px;">Daftar User</div>
     <div id="userListBody"><div class="empty">Memuat...</div></div>
+  </div>
+</div>
+
+<div id="editUserModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModal('editUserModal')">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 style="margin:0;">Edit User</h2>
+      <button class="close-btn" onclick="closeModal('editUserModal')" data-icon="close"></button>
+    </div>
+    <label class="field-label">Nama lengkap</label>
+    <input type="text" id="editUserFullName" />
+    <label class="field-label">Role</label>
+    <select id="editUserRole" onchange="onEditUserRoleChange()">
+      <option value="bendahara_ranting">Bendahara Ranting</option>
+      <option value="bendahara_rayon">Bendahara Rayon</option>
+      <option value="viewer">Viewer (read-only)</option>
+      <option value="admin">Admin</option>
+    </select>
+    <div id="editUserRayonWrap" class="hidden">
+      <label class="field-label">Rayon</label>
+      <select id="editUserRayon"></select>
+    </div>
+    <button class="btn-primary" onclick="submitEditUser()">Simpan Perubahan</button>
+    <p class="error-msg" id="editUserError"></p>
+  </div>
+</div>
+
+<div id="resetPwModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModal('resetPwModal')">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 style="margin:0;">Reset Password</h2>
+      <button class="close-btn" onclick="closeModal('resetPwModal')" data-icon="close"></button>
+    </div>
+    <p class="label" id="resetPwUserLabel" style="margin-top:0;"></p>
+    <label class="field-label">Password baru</label>
+    <input type="password" id="resetPwNewPassword" placeholder="Minimal 6 karakter" />
+    <button class="btn-primary" onclick="submitResetPassword()">Reset Password</button>
+    <p class="error-msg" id="resetPwError"></p>
   </div>
 </div>
 
@@ -756,18 +796,132 @@ async function submitNewUser(){
   }
 }
 
+let userListCache = [];
+
 async function loadUserList(){
   const { data, error } = await sb.from('profiles').select('*, rayons(name)').order('created_at');
   const body = document.getElementById('userListBody');
   if(error){ body.innerHTML = `<div class="empty">Gagal memuat: ${error.message}</div>`; return; }
-  if(!data || !data.length){ body.innerHTML = `<div class="empty">Belum ada user.</div>`; return; }
+  userListCache = data || [];
+  if(!userListCache.length){ body.innerHTML = `<div class="empty">Belum ada user.</div>`; return; }
 
   const roleLabel = { admin:'Admin', bendahara_ranting:'Bendahara Ranting', bendahara_rayon:'Bendahara Rayon', viewer:'Viewer' };
-  body.innerHTML = data.map(p => `
-    <div class="mini-row">
-      <span>${p.full_name || '-'}<br><span class="label">${roleLabel[p.role] || p.role}${p.rayons ? ' • ' + p.rayons.name : ''}</span></span>
+  body.innerHTML = userListCache.map(p => `
+    <div class="mini-row" style="align-items:center;">
+      <span>${p.full_name || '-'}<br><span class="label">@${p.username || '-'} • ${roleLabel[p.role] || p.role}${p.rayons ? ' • ' + p.rayons.name : ''}</span></span>
+      <span style="display:flex; gap:6px;">
+        <button class="icon-btn" title="Edit" onclick="openEditUser('${p.id}')" data-icon="edit"></button>
+        <button class="icon-btn" title="Reset password" onclick="openResetPassword('${p.id}')" data-icon="settings"></button>
+        ${p.id !== (currentUser && currentUser.id) ? `<button class="icon-btn" title="Hapus" onclick="confirmDeleteUser('${p.id}')" data-icon="trash"></button>` : ''}
+      </span>
     </div>
   `).join('');
+  paintIcons(body);
+}
+
+/* ---- Edit user (role/nama/rayon) ---- */
+let editingUserId = null;
+
+function openEditUser(id){
+  const u = userListCache.find(x => x.id === id);
+  if(!u) return;
+  editingUserId = id;
+  document.getElementById('editUserFullName').value = u.full_name || '';
+  document.getElementById('editUserRole').value = u.role;
+  onEditUserRoleChange();
+  if(u.role === 'bendahara_rayon') document.getElementById('editUserRayon').value = u.rayon_id || '';
+  document.getElementById('editUserError').textContent = '';
+  openModal('editUserModal');
+}
+
+function onEditUserRoleChange(){
+  const role = document.getElementById('editUserRole').value;
+  const wrap = document.getElementById('editUserRayonWrap');
+  wrap.classList.toggle('hidden', role !== 'bendahara_rayon');
+  if(role === 'bendahara_rayon'){
+    document.getElementById('editUserRayon').innerHTML =
+      rayons.map(r => `<option value="${r.id}">${r.name}</option>`).join('') ||
+      '<option value="">(belum ada rayon)</option>';
+  }
+}
+
+async function submitEditUser(){
+  const errEl = document.getElementById('editUserError');
+  errEl.textContent = '';
+  const full_name = document.getElementById('editUserFullName').value.trim();
+  const role = document.getElementById('editUserRole').value;
+  const rayon_id = role === 'bendahara_rayon' ? document.getElementById('editUserRayon').value : null;
+
+  if(role === 'bendahara_rayon' && !rayon_id){ errEl.textContent = 'Pilih rayon dulu.'; return; }
+
+  const { error } = await sb.from('profiles')
+    .update({ full_name: full_name || null, role, rayon_id })
+    .eq('id', editingUserId);
+
+  if(error){ errEl.textContent = error.message; return; }
+  closeModal('editUserModal');
+  await loadUserList();
+}
+
+/* ---- Hapus user ---- */
+async function confirmDeleteUser(id){
+  const u = userListCache.find(x => x.id === id);
+  if(!u) return;
+  if(!confirm(`Hapus user "${u.full_name || id}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+
+  const { data: sessionData } = await sb.auth.getSession();
+  const token = sessionData.session ? sessionData.session.access_token : null;
+  if(!token){ alert('Sesi login habis, silakan login ulang.'); return; }
+
+  try{
+    const res = await fetch(CREATE_USER_FN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'delete', user_id: id })
+    });
+    const result = await res.json();
+    if(!res.ok || result.error){ alert(result.error || 'Gagal menghapus user.'); return; }
+    await loadUserList();
+  }catch(e){
+    alert('Gagal menghubungi server function.');
+  }
+}
+
+/* ---- Reset password ---- */
+let resetPwUserId = null;
+
+function openResetPassword(id){
+  const u = userListCache.find(x => x.id === id);
+  if(!u) return;
+  resetPwUserId = id;
+  document.getElementById('resetPwUserLabel').textContent = `User: ${u.full_name || id}`;
+  document.getElementById('resetPwNewPassword').value = '';
+  document.getElementById('resetPwError').textContent = '';
+  openModal('resetPwModal');
+}
+
+async function submitResetPassword(){
+  const errEl = document.getElementById('resetPwError');
+  errEl.textContent = '';
+  const new_password = document.getElementById('resetPwNewPassword').value;
+  if(!new_password || new_password.length < 6){ errEl.textContent = 'Password minimal 6 karakter.'; return; }
+
+  const { data: sessionData } = await sb.auth.getSession();
+  const token = sessionData.session ? sessionData.session.access_token : null;
+  if(!token){ errEl.textContent = 'Sesi login habis, silakan login ulang.'; return; }
+
+  try{
+    const res = await fetch(CREATE_USER_FN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'reset_password', user_id: resetPwUserId, new_password })
+    });
+    const result = await res.json();
+    if(!res.ok || result.error){ errEl.textContent = result.error || 'Gagal reset password.'; return; }
+    closeModal('resetPwModal');
+  }catch(e){
+    errEl.textContent = 'Gagal menghubungi server function.';
+  }
 }
 
 function showView(id){
