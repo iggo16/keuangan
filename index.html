@@ -110,6 +110,15 @@
   .error-msg{color:var(--danger); font-size:0.83rem; margin-top:6px;}
   .empty{color:var(--muted); text-align:center; padding:20px 0; font-size:0.88rem;}
 
+  /* ---- mode read-only (role viewer) ---- */
+  body.is-readonly .pocket-actions,
+  body.is-readonly .tx-actions,
+  body.is-readonly .fab,
+  body.is-readonly .side-add-btn,
+  body.is-readonly .edit-controls,
+  body.is-readonly [data-icon="filter"].hidden{display:none !important;}
+  .readonly-badge{display:inline-block; background:var(--card2); color:var(--muted); font-size:0.7rem; font-weight:700; padding:3px 10px; border-radius:9999px; margin-left:8px; vertical-align:middle;}
+
   /* ---- desktop shell ---- */
   .app-shell{display:block;}
   .side-nav, .right-col{display:none;}
@@ -185,13 +194,12 @@
 
 <div id="authView" class="container auth-box">
   <h1>Keuangan Ranting</h1>
-  <p class="label" id="authTitle">Masuk ke akun kamu</p>
-  <label class="field-label">Email</label>
-  <input type="email" id="authEmail" placeholder="email@contoh.com" />
+  <p class="label">Masuk ke akun kamu</p>
+  <label class="field-label">Username</label>
+  <input type="text" id="authUsername" placeholder="username" autocapitalize="off" autocorrect="off" />
   <label class="field-label">Password</label>
   <input type="password" id="authPassword" placeholder="••••••••" />
   <button class="btn-primary" id="authSubmitBtn" onclick="handleAuthSubmit()">Masuk</button>
-  <button class="link-btn" id="authToggleBtn" onclick="toggleAuthMode()">Belum punya akun? Daftar</button>
   <p class="error-msg" id="authError"></p>
 </div>
 
@@ -213,6 +221,7 @@
   <div id="homeView">
     <p class="brand-label">Keuangan Ranting</p>
     <h1 id="greeting">Semangat!</h1>
+    <div id="viewerScopeWrap" class="card hidden" style="padding:10px 14px;"></div>
 
     <div class="card balance-card" onclick="openBalanceDetail()">
       <p class="label">Total saldo tergabung</p>
@@ -251,7 +260,7 @@
   <div id="pocketsView" class="hidden">
     <div class="section-head" style="margin-top:0;">
       <h1 style="margin:0; font-size:1.4rem;">Semua Kategori</h1>
-      <a onclick="openPocketModal()" style="background:var(--accent); color:#fff; padding:10px 16px; border-radius:9999px; font-weight:700; font-size:0.85rem;">+ Tambah</a>
+      <a class="edit-controls" onclick="openPocketModal()" style="background:var(--accent); color:#fff; padding:10px 16px; border-radius:9999px; font-weight:700; font-size:0.85rem;">+ Tambah</a>
     </div>
     <div class="grid2" id="pocketsFull"></div>
   </div>
@@ -310,6 +319,50 @@
   </aside>
 
 </div>
+</div>
+
+<div id="adminView" class="container hidden" style="max-width:640px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin:2px 0 16px;">
+    <h1 style="margin:0; font-size:1.4rem;">Dashboard Admin</h1>
+    <button class="btn-secondary" style="width:auto; padding:8px 14px; margin-top:0;" onclick="logout()">Keluar</button>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700; margin-bottom:6px;">Tambah Rayon</div>
+    <label class="field-label">Nama rayon</label>
+    <input type="text" id="newRayonName" placeholder="contoh: Rayon Alpha" />
+    <button class="btn-primary" onclick="submitNewRayon()">Tambah Rayon</button>
+    <p class="error-msg" id="rayonError"></p>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700; margin-bottom:6px;">Buat User Baru</div>
+    <label class="field-label">Username</label>
+    <input type="text" id="newUserUsername" placeholder="contoh: bendahara_rayon_a" autocapitalize="off" />
+    <label class="field-label">Nama lengkap</label>
+    <input type="text" id="newUserFullName" placeholder="Nama tampilan" />
+    <label class="field-label">Password</label>
+    <input type="password" id="newUserPassword" placeholder="Minimal 6 karakter" />
+    <label class="field-label">Role</label>
+    <select id="newUserRole" onchange="onNewUserRoleChange()">
+      <option value="bendahara_ranting">Bendahara Ranting</option>
+      <option value="bendahara_rayon">Bendahara Rayon</option>
+      <option value="viewer">Viewer (read-only)</option>
+      <option value="admin">Admin</option>
+    </select>
+    <div id="newUserRayonWrap" class="hidden">
+      <label class="field-label">Rayon</label>
+      <select id="newUserRayon"></select>
+    </div>
+    <button class="btn-primary" onclick="submitNewUser()">Buat User</button>
+    <p class="error-msg" id="newUserError"></p>
+    <p class="label" id="newUserSuccess" style="margin-top:8px;"></p>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700; margin-bottom:8px;">Daftar User</div>
+    <div id="userListBody"><div class="empty">Memuat...</div></div>
+  </div>
 </div>
 
 <nav id="bottomNav" class="hidden">
@@ -512,11 +565,11 @@ const SUPABASE_URL = "https://ogmiecjmxnfcgjxjkrkt.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_VEtowyIjRdeeQzmrJ4B2DQ_D8zzVhPF";
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const CREATE_USER_FN_URL = SUPABASE_URL + "/functions/v1/create-user";
 
 let currentUser = null;
 let pockets = [];
 let transactions = [];
-let isRegisterMode = false;
 let txType = "PENGELUARAN";
 let editingPocketId = null;
 let editingTxId = null;
@@ -553,33 +606,17 @@ function paintIcons(root){
   });
 }
 
-function toggleAuthMode(){
-  isRegisterMode = !isRegisterMode;
-  document.getElementById('authTitle').textContent = isRegisterMode ? "Buat akun baru" : "Masuk ke akun kamu";
-  document.getElementById('authSubmitBtn').textContent = isRegisterMode ? "Daftar" : "Masuk";
-  document.getElementById('authToggleBtn').textContent = isRegisterMode ? "Sudah punya akun? Masuk" : "Belum punya akun? Daftar";
-}
-
 async function handleAuthSubmit(){
-  const email = document.getElementById('authEmail').value.trim();
+  const username = document.getElementById('authUsername').value.trim().toLowerCase();
   const password = document.getElementById('authPassword').value;
   const errEl = document.getElementById('authError');
   errEl.textContent = "";
-  if(!email || !password){ errEl.textContent = "Email dan password wajib diisi."; return; }
+  if(!username || !password){ errEl.textContent = "Username dan password wajib diisi."; return; }
 
-  let result;
-  if(isRegisterMode){
-    result = await sb.auth.signUp({ email, password });
-  } else {
-    result = await sb.auth.signInWithPassword({ email, password });
-  }
-  if(result.error){ errEl.textContent = result.error.message; return; }
+  const email = username.includes('@') ? username : `${username}@ranting.local`;
+  const result = await sb.auth.signInWithPassword({ email, password });
+  if(result.error){ errEl.textContent = "Username atau password salah."; return; }
 
-  if(isRegisterMode && result.data.user && !result.data.session){
-    errEl.style.color = "var(--green)";
-    errEl.textContent = "Cek email kamu untuk verifikasi, lalu login.";
-    return;
-  }
   await onLoggedIn(result.data.session.user);
 }
 
@@ -588,15 +625,149 @@ async function logout(){
   location.reload();
 }
 
+let currentProfile = null;
+let rayons = [];
+let viewerScope = null; // null = Ranting, atau uuid rayon (khusus role viewer)
+
 async function onLoggedIn(user){
   currentUser = user;
+
+  const { data: profile, error: pErr } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  if(pErr || !profile){
+    document.getElementById('authError').textContent = "Akun ini belum punya profil/role. Hubungi admin.";
+    await sb.auth.signOut();
+    return;
+  }
+  currentProfile = profile;
+
+  const { data: rayonData } = await sb.from('rayons').select('*').order('name');
+  rayons = rayonData || [];
+
   document.getElementById('authView').classList.add('hidden');
+  document.getElementById('userEmailLabel').textContent = (user.user_metadata && user.user_metadata.username) || user.email;
+
+  if(currentProfile.role === 'admin'){
+    showAdminDashboard();
+    return;
+  }
+
   document.getElementById('appView').classList.remove('hidden');
   document.getElementById('bottomNav').classList.remove('hidden');
-  document.getElementById('fabBtn').classList.remove('hidden');
-  document.getElementById('greeting').textContent = "Halo, " + user.email.split('@')[0] + "!";
-  document.getElementById('userEmailLabel').textContent = user.email;
+
+  const isViewer = currentProfile.role === 'viewer';
+  document.getElementById('fabBtn').classList.toggle('hidden', isViewer);
+  document.querySelectorAll('.side-add-btn').forEach(el => el.classList.toggle('hidden', isViewer));
+  document.body.classList.toggle('is-readonly', isViewer);
+
+  let scopeLabel = 'Ranting';
+  if(currentProfile.role === 'bendahara_rayon'){
+    const r = rayons.find(x => x.id === currentProfile.rayon_id);
+    scopeLabel = r ? r.name : 'Rayon';
+  }
+  if(isViewer){
+    renderViewerScopeSwitcher();
+  }
+  document.getElementById('greeting').textContent = "Halo, " + (isViewer ? "Viewer" : scopeLabel) + "!";
+
   await loadData();
+}
+
+function renderViewerScopeSwitcher(){
+  const wrap = document.getElementById('viewerScopeWrap');
+  const opts = ['<option value="">Ranting</option>']
+    .concat(rayons.map(r => `<option value="${r.id}">${r.name}</option>`));
+  wrap.innerHTML = `
+    <label class="field-label" style="margin-top:0;">Lihat data:</label>
+    <select id="viewerScopeSelect" onchange="changeViewerScope(this.value)">${opts.join('')}</select>
+  `;
+  wrap.classList.remove('hidden');
+}
+
+async function changeViewerScope(val){
+  viewerScope = val || null;
+  await loadData();
+}
+
+/* ---- Dashboard Admin ---- */
+async function showAdminDashboard(){
+  document.getElementById('adminView').classList.remove('hidden');
+  onNewUserRoleChange();
+  await loadUserList();
+}
+
+function onNewUserRoleChange(){
+  const role = document.getElementById('newUserRole').value;
+  const wrap = document.getElementById('newUserRayonWrap');
+  wrap.classList.toggle('hidden', role !== 'bendahara_rayon');
+  if(role === 'bendahara_rayon'){
+    document.getElementById('newUserRayon').innerHTML =
+      rayons.map(r => `<option value="${r.id}">${r.name}</option>`).join('') ||
+      '<option value="">(belum ada rayon, tambah dulu di atas)</option>';
+  }
+}
+
+async function submitNewRayon(){
+  const name = document.getElementById('newRayonName').value.trim();
+  const errEl = document.getElementById('rayonError');
+  errEl.textContent = '';
+  if(!name){ errEl.textContent = 'Nama rayon wajib diisi.'; return; }
+  const { error } = await sb.from('rayons').insert({ name });
+  if(error){ errEl.textContent = error.message; return; }
+  document.getElementById('newRayonName').value = '';
+  const { data } = await sb.from('rayons').select('*').order('name');
+  rayons = data || [];
+  onNewUserRoleChange();
+}
+
+async function submitNewUser(){
+  const username = document.getElementById('newUserUsername').value.trim();
+  const full_name = document.getElementById('newUserFullName').value.trim();
+  const password = document.getElementById('newUserPassword').value;
+  const role = document.getElementById('newUserRole').value;
+  const rayon_id = role === 'bendahara_rayon' ? document.getElementById('newUserRayon').value : null;
+  const errEl = document.getElementById('newUserError');
+  const okEl = document.getElementById('newUserSuccess');
+  errEl.textContent = ''; okEl.textContent = '';
+
+  if(!username || !password){ errEl.textContent = 'Username dan password wajib diisi.'; return; }
+  if(role === 'bendahara_rayon' && !rayon_id){ errEl.textContent = 'Pilih rayon dulu.'; return; }
+
+  const { data: sessionData } = await sb.auth.getSession();
+  const token = sessionData.session ? sessionData.session.access_token : null;
+  if(!token){ errEl.textContent = 'Sesi login habis, silakan login ulang.'; return; }
+
+  try{
+    const res = await fetch(CREATE_USER_FN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ username, password, full_name, role, rayon_id })
+    });
+    const result = await res.json();
+    if(!res.ok || result.error){ errEl.textContent = result.error || 'Gagal membuat user.'; return; }
+
+    okEl.style.color = 'var(--green)';
+    okEl.textContent = `User "${result.username}" berhasil dibuat.`;
+    document.getElementById('newUserUsername').value = '';
+    document.getElementById('newUserFullName').value = '';
+    document.getElementById('newUserPassword').value = '';
+    await loadUserList();
+  }catch(e){
+    errEl.textContent = 'Gagal menghubungi server function. Pastikan Edge Function sudah di-deploy.';
+  }
+}
+
+async function loadUserList(){
+  const { data, error } = await sb.from('profiles').select('*, rayons(name)').order('created_at');
+  const body = document.getElementById('userListBody');
+  if(error){ body.innerHTML = `<div class="empty">Gagal memuat: ${error.message}</div>`; return; }
+  if(!data || !data.length){ body.innerHTML = `<div class="empty">Belum ada user.</div>`; return; }
+
+  const roleLabel = { admin:'Admin', bendahara_ranting:'Bendahara Ranting', bendahara_rayon:'Bendahara Rayon', viewer:'Viewer' };
+  body.innerHTML = data.map(p => `
+    <div class="mini-row">
+      <span>${p.full_name || '-'}<br><span class="label">${roleLabel[p.role] || p.role}${p.rayons ? ' • ' + p.rayons.name : ''}</span></span>
+    </div>
+  `).join('');
 }
 
 function showView(id){
@@ -631,13 +802,30 @@ function openModal(id){
 
 async function loadData(){
   const { data: pocketData, error: pErr } = await sb.from('pockets').select('*').order('created_at');
-  if(!pErr) pockets = pocketData || [];
-
   const { data: txData, error: tErr } = await sb.from('transactions')
     .select('*').order('created_at', { ascending:false });
-  if(!tErr) transactions = txData || [];
+
+  let allPockets = pErr ? [] : (pocketData || []);
+  let allTx = tErr ? [] : (txData || []);
+
+  // Untuk role viewer: RLS mengizinkan lihat SEMUA data (ranting + semua rayon),
+  // jadi filter scope tampilan dilakukan di sini berdasarkan pilihan dropdown.
+  if(currentProfile && currentProfile.role === 'viewer'){
+    allPockets = allPockets.filter(p => (viewerScope ? p.rayon_id === viewerScope : !p.rayon_id));
+    allTx = allTx.filter(t => (viewerScope ? t.rayon_id === viewerScope : !t.rayon_id));
+  }
+
+  pockets = allPockets;
+  transactions = allTx;
 
   renderAll();
+}
+
+// rayon_id yang berlaku untuk data BARU (pocket/transaksi) yang dibuat user ini.
+// bendahara_ranting -> null (data Ranting), bendahara_rayon -> rayon miliknya sendiri.
+function myScopeRayonId(){
+  if(!currentProfile) return null;
+  return currentProfile.role === 'bendahara_rayon' ? currentProfile.rayon_id : null;
 }
 
 function renderAll(){
@@ -750,7 +938,7 @@ function openPocketDetail(id){
       <div class="pocket-balance" style="font-size:1.4rem;">${rupiah(p.balance)}</div>
       ${p.note ? `<div class="label" style="margin-top:8px;">${p.note}</div>` : ''}
     </div>
-    <div class="filter-actions" style="margin-top:2px;">
+    <div class="filter-actions edit-controls" style="margin-top:2px;">
       <button class="btn-secondary" onclick="closeModal('pocketDetailModal'); openPocketModal('${p.id}')">Edit</button>
       <button class="btn-secondary" style="color:var(--danger); border-color:var(--danger);" onclick="closeModal('pocketDetailModal'); deletePocket('${p.id}')">Hapus</button>
     </div>
@@ -790,7 +978,7 @@ function openTxDetail(id){
       <div class="mini-row"><span>Deskripsi</span><span class="mini-row-amt">${t.category || '-'}</span></div>
       <div class="mini-row"><span>Catatan</span><span class="mini-row-amt" style="white-space:normal; text-align:right; max-width:60%;">${t.note || '-'}</span></div>
     </div>
-    <div class="filter-actions" style="grid-template-columns:1fr;">
+    <div class="filter-actions edit-controls" style="grid-template-columns:1fr;">
       <button class="btn-secondary" style="color:var(--danger); border-color:var(--danger);" onclick="closeModal('txDetailModal'); deleteTransaction('${t.id}')">Hapus mutasi</button>
     </div>
   `;
@@ -1050,7 +1238,7 @@ async function submitPocket(){
     const balanceVal = Number(document.getElementById('pocketInitialBalance').value || 0);
     const code = 'PKT-' + Math.floor(100000 + Math.random()*899999);
     const { error } = await sb.from('pockets').insert({
-      user_id: currentUser.id, name, code, type, balance: balanceVal, note
+      user_id: currentUser.id, name, code, type, balance: balanceVal, note, rayon_id: myScopeRayonId()
     });
     if(error){ errEl.textContent = error.message; return; }
   }
@@ -1215,7 +1403,8 @@ async function submitTransaction() {
       pocket_id: pocketId,
       related_pocket_id: relatedPocketId,
       category: category,
-      note: note
+      note: note,
+      rayon_id: myScopeRayonId()
     });
 
     if (error) {
