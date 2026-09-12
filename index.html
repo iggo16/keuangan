@@ -335,6 +335,7 @@
     <input type="text" id="newRayonName" placeholder="contoh: Rayon Alpha" />
     <button class="btn-primary" onclick="submitNewRayon()">Tambah Rayon</button>
     <p class="error-msg" id="rayonError"></p>
+    <div id="rayonListBody" style="margin-top:12px;"></div>
   </div>
 
   <div class="card">
@@ -732,6 +733,7 @@ async function changeViewerScope(val){
 async function showAdminDashboard(){
   document.getElementById('adminView').classList.remove('hidden');
   onNewUserRoleChange();
+  renderRayonList();
   await loadUserList();
 }
 
@@ -757,6 +759,41 @@ async function submitNewRayon(){
   const { data } = await sb.from('rayons').select('*').order('name');
   rayons = data || [];
   onNewUserRoleChange();
+  renderRayonList();
+}
+
+function renderRayonList(){
+  const body = document.getElementById('rayonListBody');
+  if(!body) return;
+  if(!rayons.length){ body.innerHTML = '<div class="empty">Belum ada rayon.</div>'; return; }
+  body.innerHTML = rayons.map(r => `
+    <div class="mini-row" style="align-items:center;">
+      <span>${r.name}</span>
+      <button class="icon-btn" title="Hapus rayon" onclick="deleteRayon('${r.id}')" data-icon="trash"></button>
+    </div>
+  `).join('');
+  paintIcons(body);
+}
+
+async function deleteRayon(id){
+  const r = rayons.find(x => x.id === id);
+  if(!r) return;
+  const sure = confirm(
+    `Hapus rayon "${r.name}"?\n\n` +
+    `PERINGATAN: semua kategori & transaksi milik rayon ini akan IKUT TERHAPUS PERMANEN. ` +
+    `User Bendahara Rayon yang terikat ke rayon ini juga akan kehilangan penugasan rayonnya ` +
+    `(perlu di-edit ulang manual). Tindakan ini tidak bisa dibatalkan.`
+  );
+  if(!sure) return;
+
+  const { error } = await sb.from('rayons').delete().eq('id', id);
+  if(error){ alert('Gagal menghapus rayon: ' + error.message); return; }
+
+  const { data } = await sb.from('rayons').select('*').order('name');
+  rayons = data || [];
+  onNewUserRoleChange();
+  renderRayonList();
+  await loadUserList();
 }
 
 async function submitNewUser(){
