@@ -201,7 +201,7 @@
   <nav id="sideNav" class="side-nav">
     <div class="side-logo">Keuangan Ranting</div>
     <div class="side-item active" data-v="homeView" onclick="showView('homeView')"><span class="side-icon" data-icon="home"></span><span>Beranda</span></div>
-    <div class="side-item" data-v="pocketsView" onclick="showView('pocketsView')"><span class="side-icon" data-icon="wallet"></span><span>Kantong</span></div>
+    <div class="side-item" data-v="pocketsView" onclick="showView('pocketsView')"><span class="side-icon" data-icon="wallet"></span><span>Kategori</span></div>
     <div class="side-item" data-v="historyView" onclick="showView('historyView')"><span class="side-icon" data-icon="clock"></span><span>Riwayat</span></div>
     <div class="side-item" data-v="settingsView" onclick="showView('settingsView')"><span class="side-icon" data-icon="settings"></span><span>Pengaturan</span></div>
     <button class="btn-primary side-add-btn" onclick="openTxModal()">Tambah mutasi</button>
@@ -236,7 +236,7 @@
     </div>
 
     <div class="section-head">
-      <span class="label" style="margin:0;">Kantong utama</span>
+      <span class="label" style="margin:0;">Kategori utama</span>
       <a onclick="showView('pocketsView')">Lihat semua</a>
     </div>
     <div class="grid2" id="pocketsPreview"></div>
@@ -250,7 +250,7 @@
 
   <div id="pocketsView" class="hidden">
     <div class="section-head" style="margin-top:0;">
-      <h1 style="margin:0; font-size:1.4rem;">Semua kantong</h1>
+      <h1 style="margin:0; font-size:1.4rem;">Semua Kategori</h1>
       <a onclick="openPocketModal()" style="background:var(--accent); color:#fff; padding:10px 16px; border-radius:9999px; font-weight:700; font-size:0.85rem;">+ Tambah</a>
     </div>
     <div class="grid2" id="pocketsFull"></div>
@@ -300,11 +300,11 @@
 
   <aside class="right-col">
     <div class="card">
-      <div class="widget-title">Ringkasan kantong</div>
+      <div class="widget-title">Ringkasan Kategori</div>
       <div id="rightPockets"></div>
     </div>
     <div class="card">
-      <div class="widget-title">Kategori teratas</div>
+      <div class="widget-title">Deskripsi teratas</div>
       <div id="rightCategories"></div>
     </div>
   </aside>
@@ -314,7 +314,7 @@
 
 <nav id="bottomNav" class="hidden">
   <div class="item active" data-v="homeView" onclick="showView('homeView')"><span data-icon="home"></span><span>Beranda</span></div>
-  <div class="item" data-v="pocketsView" onclick="showView('pocketsView')"><span data-icon="wallet"></span><span>Kantong</span></div>
+  <div class="item" data-v="pocketsView" onclick="showView('pocketsView')"><span data-icon="wallet"></span><span>Kategori</span></div>
   <div class="item" data-v="historyView" onclick="showView('historyView')"><span data-icon="clock"></span><span>Riwayat</span></div>
   <div class="item" data-v="settingsView" onclick="showView('settingsView')"><span data-icon="settings"></span><span>Sistem</span></div>
 </nav>
@@ -335,18 +335,18 @@
     <input type="number" id="txAmount" placeholder="0" />
 
     <div id="txSinglePocketWrap">
-      <label class="field-label">Pilih kantong</label>
+      <label class="field-label">Pilih Kategori</label>
       <select id="txPocket"></select>
     </div>
 
     <div id="txTransferWrap" class="hidden">
-      <label class="field-label">Dari kantong</label>
+      <label class="field-label">Dari Kategori</label>
       <select id="txFromPocket"></select>
-      <label class="field-label">Ke kantong</label>
+      <label class="field-label">Ke Kategori</label>
       <select id="txToPocket"></select>
     </div>
 
-    <label class="field-label">Kategori (opsional)</label>
+    <label class="field-label">Deskripsi (opsional)</label>
     <input type="text" id="txCategory" placeholder="Contoh: Bensin, Keluarga" />
     <label class="field-label">Catatan</label>
     <input type="text" id="txNote" placeholder="Contoh: Beli makan siang" />
@@ -358,10 +358,10 @@
 <div id="pocketModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModal('pocketModal')">
   <div class="modal">
     <div class="modal-head">
-      <h2 style="margin:0;" id="pocketModalTitle">Tambah kantong</h2>
+      <h2 style="margin:0;" id="pocketModalTitle">Tambah Kategori</h2>
       <button class="close-btn" onclick="closeModal('pocketModal')" data-icon="close"></button>
     </div>
-    <label class="field-label">Nama kantong</label>
+    <label class="field-label">Nama Kategori</label>
     <input type="text" id="pocketName" placeholder="Contoh: Bensin" />
     <label class="field-label">Tipe</label>
     <select id="pocketType">
@@ -372,7 +372,7 @@
     <input type="number" id="pocketInitialBalance" placeholder="0" />
     <label class="field-label">Catatan (opsional)</label>
     <input type="text" id="pocketNote" placeholder="Contoh: No req atau di pegang oleh " />
-    <button class="btn-primary" id="pocketSubmitBtn" onclick="submitPocket()">Buat kantong</button>
+    <button class="btn-primary" id="pocketSubmitBtn" onclick="submitPocket()">Buat Kategori</button>
     <p class="error-msg" id="pocketError"></p>
   </div>
 </div>
@@ -414,9 +414,9 @@
     </div>
 
     <div class="filter-section">
-      <div class="filter-section-title">Kantong</div>
+      <div class="filter-section-title">Kategori</div>
       <select id="filterPocketSelect" onchange="setFilterPocket(this.value)">
-        <option value="ALL">Semua kantong</option>
+        <option value="ALL">Semua Kategori</option>
       </select>
     </div>
 
@@ -464,9 +464,9 @@
     </div>
 
     <div class="filter-section">
-      <div class="filter-section-title">Kantong</div>
+      <div class="filter-section-title">Kategori</div>
       <select id="exportFilterPocketSelect" onchange="setExportFilterPocket(this.value)">
-        <option value="ALL">Semua kantong</option>
+        <option value="ALL">Semua Kategori</option>
       </select>
     </div>
 
@@ -490,7 +490,7 @@
 <div id="pocketDetailModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModal('pocketDetailModal')">
   <div class="modal">
     <div class="modal-head">
-      <h2 style="margin:0;" id="pocketDetailTitle">Detail kantong</h2>
+      <h2 style="margin:0;" id="pocketDetailTitle">Detail Kategori</h2>
       <button class="close-btn" onclick="closeModal('pocketDetailModal')" data-icon="close"></button>
     </div>
     <div id="pocketDetailBody"></div>
@@ -666,8 +666,8 @@ function pocketCardHTML(p, withActions){
     <span class="badge">${p.type}</span>
     ${withActions ? `
     <div class="pocket-actions">
-      <button class="close-btn sm" onclick="event.stopPropagation(); openPocketModal('${p.id}')" title="Edit kantong">${ICONS.edit}</button>
-      <button class="close-btn sm danger" onclick="event.stopPropagation(); deletePocket('${p.id}')" title="Hapus kantong">${ICONS.trash}</button>
+      <button class="close-btn sm" onclick="event.stopPropagation(); openPocketModal('${p.id}')" title="Edit Kategori">${ICONS.edit}</button>
+      <button class="close-btn sm danger" onclick="event.stopPropagation(); deletePocket('${p.id}')" title="Hapus Kategori">${ICONS.trash}</button>
     </div>` : ''}
     <div class="pocket-name">${p.name}</div>
     <div class="pocket-code">${p.code}</div>
@@ -678,9 +678,9 @@ function pocketCardHTML(p, withActions){
 
 function renderPockets(){
   document.getElementById('pocketsPreview').innerHTML =
-    pockets.slice(0,4).map(p=>pocketCardHTML(p,false)).join('') || `<div class="empty">Belum ada kantong</div>`;
+    pockets.slice(0,4).map(p=>pocketCardHTML(p,false)).join('') || `<div class="empty">Belum ada Kategori</div>`;
   document.getElementById('pocketsFull').innerHTML =
-    pockets.map(p=>pocketCardHTML(p,true)).join('') || `<div class="empty">Belum ada kantong</div>`;
+    pockets.map(p=>pocketCardHTML(p,true)).join('') || `<div class="empty">Belum ada Kategori</div>`;
 }
 
 function txIconAndSign(t){
@@ -731,7 +731,7 @@ function openBalanceDetail(){
           <span>${p.name} <span class="label">(${p.type})</span></span>
           <span class="mini-row-amt">${rupiah(p.balance)}</span>
         </div>
-      `).join('') || `<div class="empty">Belum ada kantong</div>`}
+      `).join('') || `<div class="empty">Belum ada Kategori</div>`}
     </div>
   `;
   openModal('balanceDetailModal');
@@ -755,7 +755,7 @@ function openPocketDetail(id){
       <button class="btn-secondary" style="color:var(--danger); border-color:var(--danger);" onclick="closeModal('pocketDetailModal'); deletePocket('${p.id}')">Hapus</button>
     </div>
     <div class="section-head" style="margin-top:14px;">
-      <span class="label" style="margin:0;">Mutasi kantong ini</span>
+      <span class="label" style="margin:0;">Mutasi Kategori ini</span>
     </div>
     ${relatedTx.length ? relatedTx.map(txRowHTML).join('') : `<div class="empty">Belum ada mutasi</div>`}
   `;
@@ -782,12 +782,12 @@ function openTxDetail(id){
     <div class="card">
       <div class="mini-row"><span>Tanggal</span><span class="mini-row-amt">${dateStr}, ${timeStr}</span></div>
       ${t.type==='TRANSFER' ? `
-        <div class="mini-row"><span>Dari kantong</span><span class="mini-row-amt">${relatedPocket ? '' : ''}${pocket ? pocket.name : '-'}</span></div>
-        <div class="mini-row"><span>Ke kantong</span><span class="mini-row-amt">${relatedPocket ? relatedPocket.name : '-'}</span></div>
+        <div class="mini-row"><span>Dari Kategori</span><span class="mini-row-amt">${relatedPocket ? '' : ''}${pocket ? pocket.name : '-'}</span></div>
+        <div class="mini-row"><span>Ke Kategori</span><span class="mini-row-amt">${relatedPocket ? relatedPocket.name : '-'}</span></div>
       ` : `
-        <div class="mini-row"><span>Kantong</span><span class="mini-row-amt">${pocket ? pocket.name : '-'}</span></div>
+        <div class="mini-row"><span>Kategori</span><span class="mini-row-amt">${pocket ? pocket.name : '-'}</span></div>
       `}
-      <div class="mini-row"><span>Kategori</span><span class="mini-row-amt">${t.category || '-'}</span></div>
+      <div class="mini-row"><span>Deskripsi</span><span class="mini-row-amt">${t.category || '-'}</span></div>
       <div class="mini-row"><span>Catatan</span><span class="mini-row-amt" style="white-space:normal; text-align:right; max-width:60%;">${t.note || '-'}</span></div>
     </div>
     <div class="filter-actions" style="grid-template-columns:1fr;">
@@ -847,7 +847,7 @@ function filterTransactions(list, typeVal, dateVal, fromVal, toVal, pocketVal){
 }
 
 function pocketOptionsHTML(activeVal){
-  return `<option value="ALL">Semua kantong</option>` +
+  return `<option value="ALL">Semua Kategori</option>` +
     pockets.map(p => `<option value="${p.id}"${activeVal===p.id?' selected':''}>${p.name}</option>`).join('');
 }
 
@@ -981,7 +981,7 @@ function renderRightPanel(){
   if(rp){
     rp.innerHTML = pockets.slice(0,5).map(p=>`
       <div class="mini-row"><span>${p.name}</span><span class="mini-row-amt">${rupiah(p.balance)}</span></div>
-    `).join('') || `<div class="empty">Belum ada kantong</div>`;
+    `).join('') || `<div class="empty">Belum ada Kategori</div>`;
   }
   const rc = document.getElementById('rightCategories');
   if(rc){
@@ -1018,7 +1018,7 @@ function openPocketModal(id){
     document.getElementById('pocketNote').value = p.note || '';
     balanceInput.value = p.balance;
     balanceInput.disabled = true;
-    document.getElementById('pocketModalTitle').textContent = 'Edit kantong';
+    document.getElementById('pocketModalTitle').textContent = 'Edit Kategori';
     document.getElementById('pocketBalanceLabel').textContent = 'Saldo saat ini (Rp) — tidak bisa diubah di sini';
     document.getElementById('pocketSubmitBtn').textContent = 'Simpan perubahan';
   } else {
@@ -1027,9 +1027,9 @@ function openPocketModal(id){
     document.getElementById('pocketNote').value = '';
     balanceInput.value = '';
     balanceInput.disabled = false;
-    document.getElementById('pocketModalTitle').textContent = 'Tambah kantong';
+    document.getElementById('pocketModalTitle').textContent = 'Tambah Kategori';
     document.getElementById('pocketBalanceLabel').textContent = 'Saldo awal (Rp)';
-    document.getElementById('pocketSubmitBtn').textContent = 'Buat kantong';
+    document.getElementById('pocketSubmitBtn').textContent = 'Buat Kategori';
   }
   openModal('pocketModal');
 }
@@ -1039,7 +1039,7 @@ async function submitPocket(){
   const type = document.getElementById('pocketType').value;
   const note = document.getElementById('pocketNote').value.trim();
   const errEl = document.getElementById('pocketError');
-  if(!name){ errEl.textContent = "Nama kantong wajib diisi."; return; }
+  if(!name){ errEl.textContent = "Nama Kategori wajib diisi."; return; }
 
   if(editingPocketId){
     const { error } = await sb.from('pockets')
@@ -1060,7 +1060,7 @@ async function submitPocket(){
 }
 
 async function deletePocket(id){
-  if(!confirm('Hapus kantong ini? Semua mutasi terkait juga akan terhapus.')) return;
+  if(!confirm('Hapus Kategori ini? Semua mutasi terkait juga akan terhapus.')) return;
   await sb.from('pockets').delete().eq('id', id);
   await loadData();
 }
@@ -1173,17 +1173,17 @@ async function submitTransaction() {
     pocketId = document.getElementById('txFromPocket').value;
     relatedPocketId = document.getElementById('txToPocket').value;
     if (!pocketId || !relatedPocketId) {
-      errEl.textContent = 'Pilih kantong asal dan tujuan.';
+      errEl.textContent = 'Pilih Kategori asal dan tujuan.';
       return;
     }
     if (pocketId === relatedPocketId) {
-      errEl.textContent = 'Kantong asal dan tujuan tidak boleh sama.';
+      errEl.textContent = 'Kategori asal dan tujuan tidak boleh sama.';
       return;
     }
   } else {
     pocketId = document.getElementById('txPocket').value;
     if (!pocketId) {
-      errEl.textContent = 'Pilih kantong terlebih dahulu.';
+      errEl.textContent = 'Pilih Kategori terlebih dahulu.';
       return;
     }
   }
@@ -1265,8 +1265,8 @@ function buildExportTitle(){
   const typeVal = exportFilterType;
   if (pocketId !== 'ALL') {
     const pocketName = getPocketName(pocketId);
-    if (typeVal !== 'ALL') return `Laporan ${typeLabel(typeVal)} Kantong ${pocketName}`;
-    return `Laporan Mutasi Kantong ${pocketName}`;
+    if (typeVal !== 'ALL') return `Laporan ${typeLabel(typeVal)} Kategori ${pocketName}`;
+    return `Laporan Mutasi Kategori ${pocketName}`;
   }
   if (typeVal !== 'ALL') return `Laporan ${typeLabel(typeVal)} Keuangan Ranting`;
   return `Laporan Mutasi Keuangan Ranting`;
@@ -1315,7 +1315,7 @@ function buildSinglePocketSummary(list, pocketId, hasTransfer){
 }
 
 function buildAllPocketsSummary(list, hasTransfer){
-  const headers = ['Kantong', 'Saldo Awal', 'Pemasukan (+)', 'Pengeluaran (-)'];
+  const headers = ['Kategori', 'Saldo Awal', 'Pemasukan (+)', 'Pengeluaran (-)'];
   if (hasTransfer) headers.push('Transfer Masuk (+)', 'Transfer Keluar (-)');
   headers.push('Saldo Akhir');
 
@@ -1354,7 +1354,7 @@ function exportCSV() {
   const summary = buildExportSummary(list);
 
   let csv = `"${title}"\n\n`;
-  csv += 'Tanggal,Kantong,Tipe,Kategori,Catatan,Jumlah\n';
+  csv += 'Tanggal,Kategori,Tipe,Deskripsi,Catatan,Jumlah\n';
   list.forEach(t => {
     const date = new Date(t.created_at).toISOString().split('T')[0];
     csv += `"${date}","${pocketColumnValue(t)}","${t.type}","${t.category || ''}","${t.note || ''}",${t.amount}\n`;
@@ -1382,7 +1382,7 @@ function exportExcel() {
   const aoa = [];
   aoa.push([title]);
   aoa.push([]);
-  aoa.push(['Tanggal', 'Kantong', 'Tipe', 'Kategori', 'Catatan', 'Jumlah']);
+  aoa.push(['Tanggal', 'Kategori', 'Tipe', 'Deskripsi', 'Catatan', 'Jumlah']);
   list.forEach(t => {
     aoa.push([
       new Date(t.created_at).toLocaleDateString('id-ID'),
@@ -1429,7 +1429,7 @@ function exportPDF() {
     }
 
     doc.autoTable({
-      head: [['No', 'Tanggal', 'Kantong', 'Tipe', 'Kategori', 'Catatan', 'Jumlah']],
+      head: [['No', 'Tanggal', 'Kategori', 'Tipe', 'Deskripsi', 'Catatan', 'Jumlah']],
       body: tableData,
       startY: 24,
       theme: 'grid',
