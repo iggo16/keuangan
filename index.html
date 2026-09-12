@@ -708,7 +708,7 @@ async function onLoggedIn(user){
   if(isViewer){
     renderViewerScopeSwitcher();
   }
-  document.getElementById('greeting').textContent = "Halo, " + (isViewer ? "Viewer" : scopeLabel) + "!";
+  document.getElementById('greeting').textContent = "Welcome, " + (isViewer ? "Viewer" : scopeLabel) + "";
 
   await loadData();
 }
